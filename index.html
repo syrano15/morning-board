@@ -385,7 +385,7 @@
           if (b.url && /^https:\/\//.test(b.url)) { card = el("a", "bluray-card"); card.href = b.url; card.target = "_blank"; card.rel = "noopener noreferrer"; }
           else card = el("div", "bluray-card");
           if (b.image && /^https:\/\//.test(b.image)) {
-            var img = el("img", "bluray-cover"); img.alt = ""; img.loading = "lazy"; img.decoding = "async"; img.referrerPolicy = "no-referrer";
+            var img = el("img", "bluray-cover"); img.alt = ""; img.decoding = "async"; img.referrerPolicy = "no-referrer";
             img.addEventListener("error", function () { img.remove(); });
             img.src = b.image; card.appendChild(img);
           }
