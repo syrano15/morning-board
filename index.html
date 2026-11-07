@@ -99,6 +99,13 @@
     .bd-head { display: none; font-size: 14px; font-weight: 800; color: var(--text-sub); padding: 12px 0 2px; }
     .bd-head .n { font-weight: 700; color: var(--text-muted); margin-left: 4px; }
     .bd-panel[hidden] { display: none; }
+    .bd-tab:disabled { opacity: .45; cursor: default; }
+    .bd-tab:disabled:active { transform: none; }
+    .bd-empty { font-size: 14px; color: var(--text-muted); padding: 14px 0; }
+    .cat-chip { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; vertical-align: 1px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, #fff); }
+    .tag-canceled { background: #F1F5F9; color: #64748B; text-decoration: line-through; }
+    .tag-deferred { background: #EEF2FF; color: #4338CA; }
+    .dl-note { font-size: 12.5px; color: var(--text-muted); padding: 10px 0 2px; }
     .bd-panel .list-item { grid-template-columns: 10px minmax(0, 1fr) auto; grid-template-areas: "dot title tag" "dot desc tag"; row-gap: 2px; align-items: start; }
     .bd-panel .list-item::before { grid-area: dot; margin-top: 8px; }
     .bd-panel .item-title { grid-area: title; }
@@ -169,6 +176,7 @@
     "use strict";
     var KEY = "morning_board_gist_id";
     var STATUS = { done: "완료", todo: "예정", due: "마감 임박", info: "참고", unused: "미사용" };
+    var DL_STATUS = { canceled: "취소", deferred: "미룸" };
     var WD = ["일","월","화","수","목","금","토"];
     var app = document.getElementById("app");
     var TOKEN_EXPIRES = "2027-11-06";   /* 피클이 Gist에 쓰는 GitHub 토큰 만료일 */
@@ -313,7 +321,17 @@
           var f = (g.files || {})["latest.json"];
           if (!f) throw new Error("NOFILE");
           var d; try { d = JSON.parse(f.content); } catch (e) { throw new Error("PARSE"); }
-          render(d, validate(d));
+          var cfg = {}; try { cfg = JSON.parse(((g.files || {})["config.json"] || {}).content || "{}"); } catch (e) { cfg = {}; }
+          if (!cfg.daylogGistId) { render(d, validate(d), { err: "데이로그 연결 정보가 없어 피클이 저장한 할 일을 보여 줍니다." }); return; }
+          return fetch("https://api.github.com/gists/" + encodeURIComponent(cfg.daylogGistId), { cache: "no-store", headers: { "Accept": "application/vnd.github+json" } })
+            .then(function (r) { if (!r.ok) throw new Error("DL " + r.status); return r.json(); })
+            .then(function (dl) {
+              var big = Object.keys(dl.files || {}).filter(function (n) { return dl.files[n].truncated; });
+              if (!big.length) return dl;
+              return Promise.all(big.map(function (n) { return fetch(dl.files[n].raw_url).then(function (r) { return r.text(); }).then(function (t) { dl.files[n].content = t; }); })).then(function () { return dl; });
+            })
+            .then(function (dl) { render(d, validate(d), { ok: true, items: daylogToday(dl) }); })
+            .catch(function () { render(d, validate(d), { err: "데이로그를 불러오지 못했습니다. 잠시 뒤 새로고침해 주세요." }); });
         })
         .catch(function (e) {
           var m = String(e.message || e);
@@ -347,27 +365,67 @@
       items.forEach(function (it) {
         var row = el("div", "list-item");
         var c = el("div", "item-content");
-        c.appendChild(el("div", "item-title", it.title || ""));
+        var tt = el("div", "item-title", it.title || "");
+        if (it.cat && it.cat.name) { var cc = el("span", "cat-chip", it.cat.name); cc.style.setProperty("--c", it.cat.color || "#64748B"); tt.appendChild(cc); }
+        c.appendChild(tt);
         var desc = descFn(it); if (desc) c.appendChild(el("div", "item-desc", desc));
         row.appendChild(c);
-        if (STATUS[it.status]) row.appendChild(el("span", "tag tag-" + it.status, STATUS[it.status]));
+        var lab = STATUS[it.status] || DL_STATUS[it.status];
+        if (lab) row.appendChild(el("span", "tag tag-" + it.status, lab));
         list.appendChild(row);
       });
       return list;
     }
 
-    function questBlock(items) {
+    /* ---- 데이로그에서 오늘 할 일을 직접 읽기 ----
+       브리핑 Gist의 config.json 에 데이로그 Gist ID가 있다. 데이로그 Gist는 읽기만 한다. */
+    function daylogToday(dl) {
+      var key = todayStr();
+      function read(name, board) {
+        var f = dl.files && dl.files[name];
+        if (!f || !f.content) return [];
+        var d; try { d = JSON.parse(f.content); } catch (e) { return []; }
+        var cats = {}; (d.cats || []).forEach(function (c) { cats[c.id] = c; });
+        var tomb = d.tomb || {};
+        var list = ((d.days || {})[key] || []).filter(function (it) {
+          if (!it || !it.id) return false;
+          var t = tomb[it.id];
+          return !(t && (t.at || 0) >= (it.at || 0));
+        });
+        list.sort(function (a, b) {
+          if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+          return (a.ord || 0) - (b.ord || 0);
+        });
+        return list.map(function (it) {
+          var c = cats[it.cat];
+          return {
+            title: it.text || "",
+            desc: it.note || "",
+            status: it.done ? "done" : it.canceled ? "canceled" : it.defer ? "deferred" : "todo",
+            board: board,
+            cat: c ? { name: c.name, color: c.color } : null
+          };
+        });
+      }
+      return read("work.json", "work").concat(read("home.json", "home"));
+    }
+
+    function questBlock(items, note) {
       items = items || [];
       var work = items.filter(function (q) { return q.board === "work"; });
       var home = items.filter(function (q) { return q.board === "home"; });
       var other = items.filter(function (q) { return q.board !== "work" && q.board !== "home"; });
-      if (!work.length || !home.length || other.length) {
-        return itemList(items, function (it) { return it.desc; }, "오늘 등록된 할 일이 없습니다.");
+      var wrap = el("div", "bd-wrap");
+      if (other.length) {
+        wrap.appendChild(itemList(items, function (it) { return it.desc; }, "오늘 등록된 할 일이 없습니다."));
+        if (note) wrap.appendChild(el("div", "dl-note", note));
+        return wrap;
       }
       var a = String(todayStr()).split("-").map(Number);
       var wd = new Date(Date.UTC(a[0], a[1] - 1, a[2])).getUTCDay();
       var sel = (wd === 0 || wd === 6) ? "home" : "work";
-      var wrap = el("div", "bd-wrap");
+      if (sel === "work" && !work.length && home.length) sel = "home";
+      if (sel === "home" && !home.length && work.length) sel = "work";
       var tabs = el("div", "bd-tabs"); tabs.setAttribute("role", "tablist");
       var panels = el("div", "bd-panels");
       var defs = [{ k: "work", label: "회사", list: work }, { k: "home", label: "집", list: home }];
@@ -375,12 +433,14 @@
       defs.forEach(function (d) {
         var b = el("button", "bd-tab"); b.type = "button"; b.setAttribute("role", "tab");
         b.appendChild(document.createTextNode(d.label)); b.appendChild(el("span", "n num", String(d.list.length)));
+        if (!d.list.length) b.disabled = true;
         b.addEventListener("click", function () { pick(d.k); });
         tabs.appendChild(b); btns[d.k] = b;
         var pn = el("div", "bd-panel"); pn.setAttribute("data-b", d.k); pn.setAttribute("role", "tabpanel");
         var hd = el("div", "bd-head"); hd.appendChild(document.createTextNode(d.label)); hd.appendChild(el("span", "n num", d.list.length + "건"));
         pn.appendChild(hd);
-        pn.appendChild(itemList(d.list, function (it) { return it.desc; }, ""));
+        if (d.list.length) pn.appendChild(itemList(d.list, function (it) { return it.desc; }, ""));
+        else pn.appendChild(el("div", "bd-empty", "오늘 " + d.label + " 할 일이 없습니다."));
         panels.appendChild(pn); pans[d.k] = pn;
       });
       function pick(k) {
@@ -388,10 +448,11 @@
       }
       pick(sel);
       wrap.appendChild(tabs); wrap.appendChild(panels);
+      if (note) wrap.appendChild(el("div", "dl-note", note));
       return wrap;
     }
 
-    function render(d, errs) {
+    function render(d, errs, dl) {
       app.innerHTML = "";
       var gen = kst(d.generatedAt);
 
@@ -427,7 +488,10 @@
       }
 
       var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그", "quests");
-      q.appendChild(questBlock(d.quests));
+      var qItems = d.quests || [], qNote = "";
+      if (dl && dl.ok) { qItems = dl.items; qNote = "데이로그에서 실시간으로 불러옴"; }
+      else if (dl && dl.err) { qNote = dl.err; }
+      q.appendChild(questBlock(qItems, qNote));
       app.appendChild(q);
 
       var wk = (d.work || []).slice().sort(function (a, b) { return new Date(a.when) - new Date(b.when); });
