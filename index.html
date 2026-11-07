@@ -87,6 +87,33 @@
       .list-item .tag { grid-area: tag; align-self: start; margin-top: 1px; }
     }
 
+
+    /* 할 일: 회사/집 나누기 — 폰은 탭, PC는 두 칸 */
+    .bd-tabs { display: flex; gap: 6px; padding: 12px 0 4px; }
+    .bd-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 8px; border-radius: 10px; border: 1px solid var(--line); background: #F8FAFC; font-size: 14px; font-weight: 700; color: var(--text-sub); cursor: pointer; transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 120ms var(--ease-out); }
+    .bd-tab:active { transform: scale(0.97); }
+    .bd-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .bd-tab .n { font-size: 12px; background: #E2E8F0; color: #334155; padding: 0 8px; border-radius: 999px; }
+    .bd-tab[aria-selected="true"] { background: #EFF6FF; border-color: #BFDBFE; color: #1D4ED8; }
+    .bd-tab[aria-selected="true"] .n { background: #DBEAFE; color: #1D4ED8; }
+    .bd-head { display: none; font-size: 14px; font-weight: 800; color: var(--text-sub); padding: 12px 0 2px; }
+    .bd-head .n { font-weight: 700; color: var(--text-muted); margin-left: 4px; }
+    .bd-panel[hidden] { display: none; }
+    .bd-panel .list-item { grid-template-columns: 10px minmax(0, 1fr) auto; grid-template-areas: "dot title tag" "dot desc tag"; row-gap: 2px; align-items: start; }
+    .bd-panel .list-item::before { grid-area: dot; margin-top: 8px; }
+    .bd-panel .item-title { grid-area: title; }
+    .bd-panel .item-desc { grid-area: desc; }
+    .bd-panel .list-item .tag { grid-area: tag; align-self: start; margin-top: 1px; }
+    .bd-panel[data-b="work"] .list-item::before { background: #2563EB; }
+    .bd-panel[data-b="home"] .list-item::before { background: #16A34A; }
+    @media (min-width: 900px) {
+      .bd-tabs { display: none; }
+      .bd-head { display: block; }
+      .bd-panels { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; }
+      .bd-panel, .bd-panel[hidden] { display: block; }
+      .bd-panel + .bd-panel { border-left: 1px solid var(--line-soft); padding-left: 28px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .bd-tab:active { transform: none; } }
     .tag { font-size: 12px; font-weight: 700; padding: 3px 11px; border-radius: 999px; white-space: nowrap; height: fit-content; }
     .tag-done { background: #DCFCE7; color: #15803D; }
     .tag-todo { background: #EEF2F7; color: #475569; }
@@ -266,6 +293,7 @@
         if (!Array.isArray(d[k])) { errs.push(k + " 섹션이 없습니다."); return; }
         if (k === "bluray") return;
         d[k].forEach(function (it) { if (!STATUS[it.status]) errs.push(k + " / " + (it.title || "?") + ": 정해진 status가 아닙니다 (" + it.status + ")."); });
+        if (k === "quests") d[k].forEach(function (it) { if (it.board != null && it.board !== "work" && it.board !== "home") errs.push("quests / " + (it.title || "?") + ": board는 work 또는 home이어야 합니다 (" + it.board + ")."); });
       });
       return errs;
     }
@@ -328,6 +356,41 @@
       return list;
     }
 
+    function questBlock(items) {
+      items = items || [];
+      var work = items.filter(function (q) { return q.board === "work"; });
+      var home = items.filter(function (q) { return q.board === "home"; });
+      var other = items.filter(function (q) { return q.board !== "work" && q.board !== "home"; });
+      if (!work.length || !home.length || other.length) {
+        return itemList(items, function (it) { return it.desc; }, "오늘 등록된 할 일이 없습니다.");
+      }
+      var a = String(todayStr()).split("-").map(Number);
+      var wd = new Date(Date.UTC(a[0], a[1] - 1, a[2])).getUTCDay();
+      var sel = (wd === 0 || wd === 6) ? "home" : "work";
+      var wrap = el("div", "bd-wrap");
+      var tabs = el("div", "bd-tabs"); tabs.setAttribute("role", "tablist");
+      var panels = el("div", "bd-panels");
+      var defs = [{ k: "work", label: "회사", list: work }, { k: "home", label: "집", list: home }];
+      var btns = {}, pans = {};
+      defs.forEach(function (d) {
+        var b = el("button", "bd-tab"); b.type = "button"; b.setAttribute("role", "tab");
+        b.appendChild(document.createTextNode(d.label)); b.appendChild(el("span", "n num", String(d.list.length)));
+        b.addEventListener("click", function () { pick(d.k); });
+        tabs.appendChild(b); btns[d.k] = b;
+        var pn = el("div", "bd-panel"); pn.setAttribute("data-b", d.k); pn.setAttribute("role", "tabpanel");
+        var hd = el("div", "bd-head"); hd.appendChild(document.createTextNode(d.label)); hd.appendChild(el("span", "n num", d.list.length + "건"));
+        pn.appendChild(hd);
+        pn.appendChild(itemList(d.list, function (it) { return it.desc; }, ""));
+        panels.appendChild(pn); pans[d.k] = pn;
+      });
+      function pick(k) {
+        defs.forEach(function (d) { var on = d.k === k; btns[d.k].setAttribute("aria-selected", on ? "true" : "false"); pans[d.k].hidden = !on; });
+      }
+      pick(sel);
+      wrap.appendChild(tabs); wrap.appendChild(panels);
+      return wrap;
+    }
+
     function render(d, errs) {
       app.innerHTML = "";
       var gen = kst(d.generatedAt);
@@ -364,7 +427,7 @@
       }
 
       var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그", "quests");
-      q.appendChild(itemList(d.quests, function (it) { return it.desc; }, "오늘 등록된 할 일이 없습니다."));
+      q.appendChild(questBlock(d.quests));
       app.appendChild(q);
 
       var wk = (d.work || []).slice().sort(function (a, b) { return new Date(a.when) - new Date(b.when); });
