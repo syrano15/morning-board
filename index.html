@@ -331,6 +331,17 @@
       if (sky === "snow") tips.push({ t: "❄️ 눈 소식 · 미끄럼 주의", k: "wet" });
       else if (sky === "rain") tips.push({ t: "☂️ 우산 챙기세요", k: "wet" });
       else if (rc >= 40) tips.push({ t: "☂️ 우산 있으면 좋아요", k: "wet" });
+      /* 출근길: 버스·택시 기준 (정류장 대기 체감·비·눈) */
+      var m = w.commuteAM;
+      if (m && typeof m === "object") {
+        var mFeels = Number(m.feels), mRc = Number(m.rainChance), mSnow = m.snow === true;
+        var mAt = m.time ? " (" + m.time + ")" : "";
+        var mCount = 0;
+        if (mSnow) { tips.push({ t: "🚌 출근길 눈" + mAt + " · 도로 막힐 수 있어요 · 일찍 나서세요", k: "bad" }); mCount++; }
+        else if (!isNaN(mRc) && mRc >= 40) { tips.push({ t: "🚌 출근길 비 " + mRc + "%" + mAt + " · 우산 챙기세요", k: "wet" }); mCount++; }
+        if (!isNaN(mFeels) && mFeels <= 0) { tips.push({ t: "🚌 출근길 체감 " + mFeels + "°" + mAt + " · 정류장 대기 춥습니다", k: "cold" }); mCount++; }
+        if (mCount === 0) tips.push({ t: "🚌 출근길 무난해요" + mAt, k: "ok" });
+      }
       var c = w.commute;
       if (c && typeof c === "object") {
         var wind = Number(c.wind), gust = Number(c.gust), feels = Number(c.feels), crc = Number(c.rainChance);
