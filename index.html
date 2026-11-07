@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d1117">
+  <meta name="theme-color" content="#EDF2F8">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,113 +14,124 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
   <style>
     :root {
-      --bg: #0A0E13;
-      --card-bg: rgba(19, 25, 33, 0.86);
-      --row-line: rgba(255, 255, 255, 0.07);
-      --border: #263140;
-      --text-main: #EEF2F7;
-      --text-sub: #AAB5C3;
-      --text-muted: #8895A6;
-      --accent: #8B5CF6;
-      --accent-soft: rgba(139, 92, 246, 0.16);
-      --success-text: #4CC26A;
-      --warning-bg: rgba(210, 153, 34, 0.16);
-      --warning-text: #E2B341;
-      --danger-bg: rgba(248, 81, 73, 0.16);
-      --danger-text: #FF7B72;
-      --blue-bg: rgba(56, 139, 253, 0.16);
-      --blue-text: #6CB2FF;
+      --bg: #EDF2F8;
+      --panel: #FFFFFF;
+      --line: #DCE3EC;
+      --line-soft: #E9EEF4;
+      --text-main: #0F172A;
+      --text-sub: #3B4A5E;
+      --text-muted: #5B6778;
+      --accent: #2563EB;
       --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --shadow: 0 1px 2px rgba(15,23,42,.05), 0 10px 26px -16px rgba(15,23,42,.20);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
     html {
       min-height: 100%;
       background:
-        radial-gradient(820px 520px at 8% -10%, rgba(139, 92, 246, 0.24), transparent 62%),
-        radial-gradient(720px 480px at 100% 6%, rgba(56, 139, 253, 0.13), transparent 60%),
-        radial-gradient(800px 600px at 50% 115%, rgba(45, 212, 191, 0.07), transparent 60%),
-        linear-gradient(180deg, #0D1219 0%, #090C11 100%);
+        radial-gradient(900px 500px at 10% -5%, rgba(96,165,250,.20), transparent 60%),
+        radial-gradient(760px 480px at 100% 20%, rgba(129,140,248,.12), transparent 60%),
+        linear-gradient(180deg, #EEF3F9 0%, #E8EDF5 100%);
     }
-    body {
-      min-height: 100vh; color: var(--text-main); padding: 28px 16px 60px; display: flex; justify-content: center; line-height: 1.5;
-      background: transparent;
-    }
-    body::before {
-      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-      background-size: 36px 36px;
-      -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 0%, transparent 75%);
-              mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 0%, transparent 75%);
-    }
-    .container { position: relative; z-index: 1; width: 100%; max-width: 740px; display: flex; flex-direction: column; gap: 16px; }
+    body { min-height: 100vh; color: var(--text-main); padding: 24px 16px 56px; display: flex; justify-content: center; line-height: 1.5; background: transparent; }
+    .container { width: 100%; max-width: 920px; display: flex; flex-direction: column; gap: 14px; }
     .num { font-variant-numeric: tabular-nums; }
 
-    header { background: linear-gradient(135deg, rgba(139,92,246,0.14), rgba(19,25,33,0.86) 55%); border: 1px solid #343B57; border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; backdrop-filter: blur(10px); }
-    .header-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
-    h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-    .header-sub { font-size: 14.5px; color: var(--text-sub); margin-top: 4px; font-weight: 500; }
-    .badge-live { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: #CFC2FF; font-size: 12.5px; font-weight: 700; padding: 5px 11px; border-radius: 20px; border: 1px solid rgba(139, 92, 246, 0.38); }
-    .badge-live::before { content: ""; width: 6px; height: 6px; background: #A78BFA; border-radius: 50%; }
-    .weather-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--text-sub); }
-    .weather-strip > span { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 7px 12px; border-radius: 10px; }
-    .weather-strip strong { color: var(--text-main); font-weight: 700; }
+    /* 날씨 헤더 */
+    header { position: relative; overflow: hidden; border-radius: 22px; min-height: 210px; padding: 24px 26px 22px; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; color: #fff; box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 18px 40px -20px rgba(15,23,42,.45); background: #4a6b8f; }
+    .sky-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    header::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,15,30,0) 20%, rgba(8,15,30,.45) 100%); pointer-events: none; }
+    .header-top, .weather-strip { position: relative; z-index: 1; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
+    h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.6px; text-shadow: 0 1px 8px rgba(0,0,0,.25); }
+    .header-sub { font-size: 15px; font-weight: 600; margin-top: 4px; color: rgba(255,255,255,.92); text-shadow: 0 1px 6px rgba(0,0,0,.25); }
+    .badge-live { display: inline-flex; align-items: center; gap: 6px; background: rgba(15,23,42,.42); color: #fff; font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); backdrop-filter: blur(8px); }
+    .badge-live::before { content: ""; width: 6px; height: 6px; background: #A5F3C4; border-radius: 50%; }
+    .weather-strip { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+    .weather-strip > span { background: rgba(15,23,42,.38); border: 1px solid rgba(255,255,255,.22); color: rgba(255,255,255,.92); padding: 7px 13px; border-radius: 11px; backdrop-filter: blur(8px); }
+    .weather-strip strong { color: #fff; font-weight: 800; }
 
-    .section-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 18px 20px 8px; display: flex; flex-direction: column; gap: 6px; backdrop-filter: blur(10px); }
-    .section-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--row-line); gap: 8px; }
-    .section-title { font-size: 16.5px; font-weight: 800; letter-spacing: -0.2px; }
-    .section-meta { font-size: 12px; font-weight: 600; color: var(--text-sub); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 2px 9px; border-radius: 999px; }
+    /* 비·눈·구름 움직임 */
+    .rain-fall { animation: rainFall 0.9s linear infinite; }
+    .snow-fall { animation: snowFall 9s linear infinite; }
+    .snow-fall.slow { animation-duration: 14s; }
+    .drift { animation: drift 40s ease-in-out infinite alternate; }
+    @keyframes rainFall { from { transform: translate(0, -60px); } to { transform: translate(-12px, 0); } }
+    @keyframes snowFall { from { transform: translate(0, -240px); } to { transform: translate(-30px, 0); } }
+    @keyframes drift { from { transform: translateX(-18px); } to { transform: translateX(18px); } }
+
+    /* 섹션 카드 */
+    .section-card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 22px 6px; box-shadow: var(--shadow); --dot: #64748B; }
+    .section-card.s-quests { --dot: #2563EB; }
+    .section-card.s-work { --dot: #0D9488; }
+    .section-card.s-benefits { --dot: #DB2777; }
+    .section-card.s-bluray { --dot: #7C3AED; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft); gap: 8px; }
+    .section-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+    .section-meta { font-size: 12px; font-weight: 700; color: var(--text-sub); background: #EEF2F7; padding: 3px 10px; border-radius: 999px; }
 
     .item-list { display: flex; flex-direction: column; }
-    .list-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 13px 2px; border-bottom: 1px solid var(--row-line); }
+    .list-item { display: grid; grid-template-columns: 10px minmax(0, 34%) minmax(0, 1fr) auto; align-items: center; column-gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
     .list-item:last-child { border-bottom: none; }
-    .item-content { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .list-item::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--dot); }
+    .item-content { display: contents; }
     .item-title { font-size: 15.5px; font-weight: 700; color: var(--text-main); }
-    .item-desc { font-size: 13.5px; color: var(--text-sub); }
-    .empty { font-size: 14px; color: var(--text-muted); padding: 12px 2px; }
+    .item-desc { font-size: 14px; color: var(--text-sub); }
+    .list-item .tag { justify-self: end; }
+    .empty { font-size: 14px; color: var(--text-muted); padding: 14px 0; }
+    @media (max-width: 640px) {
+      .list-item { grid-template-columns: 10px minmax(0, 1fr) auto; grid-template-areas: "dot title tag" "dot desc tag"; row-gap: 2px; align-items: start; }
+      .list-item::before { grid-area: dot; margin-top: 8px; }
+      .item-title { grid-area: title; }
+      .item-desc { grid-area: desc; font-size: 13.5px; }
+      .list-item .tag { grid-area: tag; align-self: start; margin-top: 1px; }
+    }
 
-    .tag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; height: fit-content; border: 1px solid transparent; margin-top: 1px; }
-    .tag-done { background: rgba(46,160,67,0.16); color: var(--success-text); border-color: rgba(46,160,67,0.35); }
-    .tag-todo { background: rgba(136,149,166,0.14); color: #C3CCD8; border-color: rgba(136,149,166,0.32); }
-    .tag-due { background: var(--danger-bg); color: var(--danger-text); border-color: rgba(248,81,73,0.35); }
-    .tag-info { background: var(--blue-bg); color: var(--blue-text); border-color: rgba(56,139,253,0.35); }
-    .tag-unused { background: var(--warning-bg); color: var(--warning-text); border-color: rgba(210,153,34,0.38); }
+    .tag { font-size: 12px; font-weight: 700; padding: 3px 11px; border-radius: 999px; white-space: nowrap; height: fit-content; }
+    .tag-done { background: #DCFCE7; color: #15803D; }
+    .tag-todo { background: #EEF2F7; color: #475569; }
+    .tag-due { background: #FEE2E2; color: #B91C1C; }
+    .tag-info { background: #E0F2FE; color: #0369A1; }
+    .tag-unused { background: #FEF3C7; color: #A16207; }
 
-    .bluray-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; padding: 8px 0 12px; }
-    .bluray-card { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 13px 14px; display: flex; flex-direction: column; gap: 6px; color: inherit; text-decoration: none; }
+    .bluray-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; padding: 14px 0 16px; }
+    .bluray-card { display: flex; gap: 14px; align-items: stretch; background: #F8FAFC; border: 1px solid var(--line); border-radius: 14px; padding: 12px; color: inherit; text-decoration: none; min-height: 110px; }
     a.bluray-card { transition: border-color 150ms ease, transform 120ms var(--ease-out); }
     a.bluray-card:active { transform: scale(0.98); }
-    @media (hover: hover) and (pointer: fine) { a.bluray-card:hover { border-color: rgba(255,255,255,0.2); } }
-    .bluray-tag { font-size: 11px; font-weight: 800; color: #5CC8FF; letter-spacing: 0.6px; }
+    @media (hover: hover) and (pointer: fine) { a.bluray-card:hover { border-color: #A5B4CB; } }
+    .bluray-cover { flex: none; width: 66px; aspect-ratio: 5 / 6.4; border-radius: 6px; object-fit: cover; background: #E2E8F0; box-shadow: 0 2px 6px rgba(15,23,42,.18); }
+    .bluray-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .bluray-tag { font-size: 11px; font-weight: 800; color: #0E7490; letter-spacing: 0.6px; }
     .bluray-title { font-size: 14px; font-weight: 700; line-height: 1.45; }
-    .bluray-meta { font-size: 12px; color: var(--text-muted); margin-top: auto; }
+    .bluray-meta { font-size: 12.5px; color: var(--text-muted); margin-top: auto; }
 
-    .alert { background: var(--warning-bg); border: 1px solid rgba(210,153,34,0.4); color: #EBC255; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
-    .token-alert { font-size: 14px; font-weight: 700; line-height: 1.55; }
-    .alert.error { background: var(--danger-bg); border-color: rgba(248,81,73,0.4); color: #FF8F87; }
+    .alert { background: #FFF7E6; border: 1px solid #F5C26B; color: #7A4100; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+    .alert.error { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
     .alert ul { margin: 6px 0 0 16px; }
 
     footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); gap: 8px; flex-wrap: wrap; padding: 4px 4px 0; }
     .link-btn { background: none; border: none; color: var(--text-muted); font-size: 12px; text-decoration: underline; cursor: pointer; padding: 4px; }
 
-    .setup { max-width: 420px; width: 100%; margin: 12vh auto 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .setup { max-width: 420px; width: 100%; margin: 12vh auto 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); }
     .setup h2 { font-size: 17px; }
     .setup p { font-size: 13px; color: var(--text-sub); }
-    .setup input { width: 100%; padding: 10px 12px; background: #0B0F14; color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; font-family: ui-monospace, monospace; }
+    .setup input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; outline: none; font-family: ui-monospace, monospace; }
     .setup input:focus { border-color: var(--accent); }
     .btn { align-self: flex-start; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; background: var(--accent); color: #fff; transition: transform 120ms var(--ease-out); }
     .btn:active { transform: scale(0.97); }
     .loading { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 20vh; }
 
     @media (max-width: 480px) {
-      body { padding: 18px 12px 50px; }
-      header { padding: 18px; }
-      h1 { font-size: 23px; }
-      .section-card { padding: 16px 16px 6px; }
+      body { padding: 14px 12px 50px; }
+      header { padding: 18px; min-height: 200px; border-radius: 18px; }
+      h1 { font-size: 24px; }
+      .section-card { padding: 14px 16px 4px; }
       .bluray-grid { grid-template-columns: 1fr; }
     }
-    @media (prefers-reduced-motion: reduce) { .btn:active, a.bluray-card:active { transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .rain-fall, .snow-fall, .drift { animation: none; }
+      .btn:active, a.bluray-card:active { transform: none; }
+    }
   </style>
 </head>
 <body>
@@ -148,6 +159,67 @@
         ? "⚠️ 피클의 GitHub 토큰 만료가 " + left + "일 남았습니다 (" + TOKEN_EXPIRES + "). 만료되면 피클이 데이터를 갱신하지 못합니다. 클로드에게 문의하세요!"
         : "⚠️ 피클의 GitHub 토큰이 만료됐습니다 (" + TOKEN_EXPIRES + "). 지금 화면은 마지막으로 저장된 데이터입니다. 클로드에게 문의하세요!";
       return box;
+    }
+
+    var SKY = { clear: 1, partly: 1, cloudy: 1, rain: 1, snow: 1 };
+    function skyOf(w) {
+      if (w && SKY[w.sky]) return w.sky;
+      var n = String((w && w.note) || "");
+      if (/눈/.test(n)) return "snow";
+      if (/비|소나기/.test(n)) return "rain";
+      if (/흐림|흐리/.test(n)) return "cloudy";
+      if (/구름/.test(n)) return "partly";
+      if (w && Number(w.rainChance) >= 60) return "rain";
+      return "clear";
+    }
+    function cloud(x, y, s, fill, op) {
+      return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')" fill="' + fill + '" opacity="' + op + '">' +
+        '<ellipse cx="0" cy="18" rx="62" ry="22"/><circle cx="-26" cy="8" r="24"/><circle cx="8" cy="-4" r="32"/><circle cx="38" cy="10" r="22"/></g>';
+    }
+    function hills(c1, c2, c3) {
+      return '<path d="M0 170 C 120 120 210 150 320 128 C 430 106 520 150 640 124 C 720 108 770 118 800 112 L800 240 L0 240 Z" fill="' + c1 + '"/>' +
+        '<path d="M0 196 C 140 160 260 188 400 168 C 540 148 650 186 800 160 L800 240 L0 240 Z" fill="' + c2 + '"/>' +
+        '<path d="M0 222 C 180 200 330 220 480 206 C 610 194 720 214 800 204 L800 240 L0 240 Z" fill="' + c3 + '"/>';
+    }
+    function sceneSVG(kind) {
+      var g = "", sky;
+      if (kind === "clear") {
+        sky = ["#2F7FE0", "#7DBDF7"];
+        g = '<circle cx="742" cy="44" r="58" fill="#FFE7A3" opacity=".35"/><circle cx="742" cy="44" r="32" fill="#FFD25E"/>' +
+            '<g class="drift">' + cloud(420, 60, .7, "#fff", .5) + '</g>' + hills("#5C9BD6", "#4C86BE", "#3E6F9E");
+      } else if (kind === "partly") {
+        sky = ["#4C8FD6", "#A3CDF3"];
+        g = '<circle cx="752" cy="40" r="30" fill="#FFD25E"/><g class="drift">' + cloud(712, 66, .75, "#fff", .95) + cloud(360, 56, .75, "#fff", .7) + '</g>' +
+            hills("#6A9CCB", "#5585B4", "#456F98");
+      } else if (kind === "cloudy") {
+        sky = ["#6E8299", "#B8C5D3"];
+        g = '<g class="drift">' + cloud(160, 70, 1.1, "#E8EDF3", .9) + cloud(500, 36, 1.1, "#D9E0E8", .95) + cloud(728, 40, .9, "#EEF2F6", .85) + '</g>' +
+            hills("#7D8FA3", "#6A7C91", "#58697D");
+      } else if (kind === "rain") {
+        sky = ["#3F4D60", "#7D8C9E"];
+        var drops = "";
+        for (var i = 0; i < 70; i++) {
+          var x = (i * 53) % 820, y = (i * 37) % 300 - 20;
+          drops += '<line x1="' + x + '" y1="' + y + '" x2="' + (x - 4) + '" y2="' + (y + 18) + '"/>';
+        }
+        g = '<g class="drift">' + cloud(170, 40, 1.3, "#2E3A49", .9) + cloud(470, 30, 1.5, "#364353", .95) + cloud(730, 46, 1.2, "#2B3644", .9) + '</g>' +
+            hills("#4E5D70", "#425062", "#364354") +
+            '<g class="rain-fall" stroke="#CFE2F5" stroke-width="2" stroke-linecap="round" opacity=".6">' + drops + '</g>';
+      } else {
+        sky = ["#8DA0B6", "#DCE5EE"];
+        var flakes = "", flakes2 = "";
+        for (var j = 0; j < 46; j++) {
+          var fx = (j * 71) % 800, fy = (j * 43) % 480 - 240;
+          flakes += '<circle cx="' + fx + '" cy="' + fy + '" r="' + (2 + (j % 3)) + '"/>';
+          flakes2 += '<circle cx="' + ((fx + 35) % 800) + '" cy="' + (fy + 120) + '" r="' + (1.5 + (j % 2)) + '"/>';
+        }
+        g = '<g class="drift">' + cloud(200, 40, 1.2, "#EEF3F8", .9) + cloud(700, 30, 1.0, "#E4EBF2", .9) + '</g>' +
+            hills("#E9EFF5", "#D6E0EA", "#C3CFDC") +
+            '<g class="snow-fall" fill="#fff" opacity=".95">' + flakes + '</g><g class="snow-fall slow" fill="#fff" opacity=".75">' + flakes2 + '</g>';
+      }
+      return '<svg class="sky-scene" viewBox="0 0 800 240" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">' +
+        '<defs><linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + sky[0] + '"/><stop offset="1" stop-color="' + sky[1] + '"/></linearGradient></defs>' +
+        '<rect width="800" height="240" fill="url(#skyg)"/>' + g + '</svg>';
     }
 
     function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -189,6 +261,7 @@
       var errs = [];
       if (d.schema !== "morning-board/1") errs.push("schema 값이 morning-board/1이 아닙니다.");
       if (!/^\d{4}-\d{2}-\d{2}$/.test(d.date || "")) errs.push("date 형식이 YYYY-MM-DD가 아닙니다.");
+      if (d.weather && d.weather.sky != null && !SKY[d.weather.sky]) errs.push("weather.sky는 clear·partly·cloudy·rain·snow 중 하나여야 합니다 (" + d.weather.sky + ").");
       ["quests", "work", "benefits", "bluray"].forEach(function (k) {
         if (!Array.isArray(d[k])) { errs.push(k + " 섹션이 없습니다."); return; }
         if (k === "bluray") return;
@@ -233,8 +306,8 @@
       f.appendChild(b); return f;
     }
 
-    function section(title, meta) {
-      var s = el("section", "section-card");
+    function section(title, meta, key) {
+      var s = el("section", "section-card" + (key ? " s-" + key : ""));
       var h = el("div", "section-header");
       h.appendChild(el("div", "section-title", title));
       if (meta) h.appendChild(el("div", "section-meta", meta));
@@ -260,6 +333,8 @@
       var gen = kst(d.generatedAt);
 
       var head = el("header");
+      head.className = "sky-" + skyOf(d.weather);
+      head.insertAdjacentHTML("afterbegin", sceneSVG(skyOf(d.weather)));
       var top = el("div", "header-top");
       var tg = el("div");
       tg.appendChild(el("h1", null, "☀️ 모닝 브리핑"));
@@ -288,20 +363,20 @@
         al.appendChild(ul); app.appendChild(al);
       }
 
-      var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그");
+      var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그", "quests");
       q.appendChild(itemList(d.quests, function (it) { return it.desc; }, "오늘 등록된 할 일이 없습니다."));
       app.appendChild(q);
 
       var wk = (d.work || []).slice().sort(function (a, b) { return new Date(a.when) - new Date(b.when); });
-      var ws2 = section("💼 회사 리마인더 & 일정", wk.length ? wk.length + "건" : "");
+      var ws2 = section("💼 회사 리마인더 & 일정", wk.length ? wk.length + "건" : "", "work");
       ws2.appendChild(itemList(wk, function (it) { return [whenLabel(it.when), it.place, it.desc].filter(Boolean).join(" · "); }, "예정된 회사 일정이 없습니다."));
       app.appendChild(ws2);
 
-      var bn = section("🎁 LG 유플러스 혜택", "");
+      var bn = section("🎁 LG 유플러스 혜택", "", "benefits");
       bn.appendChild(itemList(d.benefits, function (it) { return it.desc; }, "확인할 혜택이 없습니다."));
       app.appendChild(bn);
 
-      var br = section("🎬 알라딘 4K UHD 블루레이 신작 / 예판", (d.bluray || []).length ? d.bluray.length + "건" : "");
+      var br = section("🎬 알라딘 4K UHD 블루레이 신작 / 예판", (d.bluray || []).length ? d.bluray.length + "건" : "", "bluray");
       if (!(d.bluray || []).length) br.appendChild(el("div", "empty", "새로 올라온 타이틀이 없습니다."));
       else {
         var grid = el("div", "bluray-grid");
@@ -309,9 +384,16 @@
           var card;
           if (b.url && /^https:\/\//.test(b.url)) { card = el("a", "bluray-card"); card.href = b.url; card.target = "_blank"; card.rel = "noopener noreferrer"; }
           else card = el("div", "bluray-card");
-          if (b.edition) card.appendChild(el("span", "bluray-tag", b.edition));
-          card.appendChild(el("div", "bluray-title", b.title || ""));
-          if (b.discs) card.appendChild(el("div", "bluray-meta", b.discs));
+          if (b.image && /^https:\/\//.test(b.image)) {
+            var img = el("img", "bluray-cover"); img.alt = ""; img.loading = "lazy"; img.decoding = "async"; img.referrerPolicy = "no-referrer";
+            img.addEventListener("error", function () { img.remove(); });
+            img.src = b.image; card.appendChild(img);
+          }
+          var bt = el("div", "bluray-text");
+          if (b.edition) bt.appendChild(el("span", "bluray-tag", b.edition));
+          bt.appendChild(el("div", "bluray-title", b.title || ""));
+          if (b.discs) bt.appendChild(el("div", "bluray-meta", b.discs));
+          card.appendChild(bt);
           grid.appendChild(card);
         });
         br.appendChild(grid);
