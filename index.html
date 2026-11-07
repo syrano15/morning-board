@@ -318,7 +318,7 @@
     }
 
     /* ---- 날씨 한마디: 더위 많이 탐 + 자전거 퇴근 기준 ---- */
-    function weatherTips(w) {
+    function weatherTips(w, dayOff) {
       var tips = [];
       if (!w) return tips;
       var max = Number(w.max), min = Number(w.min), sky = skyOf(w), rc = Number(w.rainChance) || 0;
@@ -332,7 +332,8 @@
       else if (sky === "rain") tips.push({ t: "☂️ 우산 챙기세요", k: "wet" });
       else if (rc >= 40) tips.push({ t: "☂️ 우산 있으면 좋아요", k: "wet" });
       /* 출근길: 버스·택시 기준 (정류장 대기 체감·비·눈) */
-      var m = w.commuteAM;
+      /* 주말·공휴일(dayOff)에는 출퇴근 칩을 숨긴다 */
+      var m = dayOff ? null : w.commuteAM;
       if (m && typeof m === "object") {
         var mFeels = Number(m.feels), mRc = Number(m.rainChance), mSnow = m.snow === true;
         var mAt = m.time ? " (" + m.time + ")" : "";
@@ -342,7 +343,7 @@
         if (!isNaN(mFeels) && mFeels <= 0) { tips.push({ t: "🚌 출근길 체감 " + mFeels + "°" + mAt + " · 정류장 대기 춥습니다", k: "cold" }); mCount++; }
         if (mCount === 0) tips.push({ t: "🚌 출근길 무난해요" + mAt, k: "ok" });
       }
-      var c = w.commute;
+      var c = dayOff ? null : w.commute;
       if (c && typeof c === "object") {
         var wind = Number(c.wind), gust = Number(c.gust), feels = Number(c.feels), crc = Number(c.rainChance);
         var at = c.time ? " (" + c.time + ")" : "";
@@ -353,6 +354,15 @@
         if (tips.filter(function (x) { return x.t.indexOf("🚲") === 0; }).length === 0) tips.push({ t: "🚲 퇴근길 자전거 무난해요" + at, k: "ok" });
       }
       return tips;
+    }
+
+    /* 쉬는 날: 토·일은 날짜로 자동 판단, 공휴일은 피클이 넣는 dayOff: true로 판단 */
+    function isDayOff(d) {
+      if (d && d.dayOff === true) return true;
+      var mt = /^(\d{4})-(\d{2})-(\d{2})$/.exec((d && d.date) || "");
+      if (!mt) return false;
+      var wd = new Date(Date.UTC(+mt[1], +mt[2] - 1, +mt[3])).getUTCDay();
+      return wd === 0 || wd === 6;
     }
 
     function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -618,7 +628,7 @@
         var s1 = el("span"); s1.appendChild(document.createTextNode("📍 " + (w.place || "") + ": ")); s1.appendChild(el("strong", "num", "최저 " + w.min + "°C / 최고 " + w.max + "°C"));
         var s2 = el("span"); s2.appendChild(document.createTextNode("☔ 강수확률 ")); s2.appendChild(el("strong", "num", w.rainChance + "%")); if (w.note) s2.appendChild(document.createTextNode(" (" + w.note + ")"));
         ws.appendChild(s1); ws.appendChild(s2); head.appendChild(ws);
-        var tips = weatherTips(w);
+        var tips = weatherTips(w, isDayOff(d));
         if (tips.length) {
           var tr = el("div", "tips");
           tips.forEach(function (x) { tr.appendChild(el("span", "tip tip-" + x.k, x.t)); });
