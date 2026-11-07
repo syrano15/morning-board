@@ -97,6 +97,7 @@
     .bluray-meta { font-size: 12px; color: var(--text-muted); margin-top: auto; }
 
     .alert { background: var(--warning-bg); border: 1px solid rgba(210,153,34,0.4); color: #EBC255; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+    .token-alert { font-size: 14px; font-weight: 700; line-height: 1.55; }
     .alert.error { background: var(--danger-bg); border-color: rgba(248,81,73,0.4); color: #FF8F87; }
     .alert ul { margin: 6px 0 0 16px; }
 
@@ -132,6 +133,22 @@
     var STATUS = { done: "완료", todo: "예정", due: "마감 임박", info: "참고", unused: "미사용" };
     var WD = ["일","월","화","수","목","금","토"];
     var app = document.getElementById("app");
+    var TOKEN_EXPIRES = "2027-11-06";   /* 피클이 Gist에 쓰는 GitHub 토큰 만료일 */
+    var TOKEN_WARN_DAYS = 30;
+    function tokenWarning() {
+      var t = new Date(Date.now() + 9 * 3600 * 1000);
+      var today = Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate());
+      var a = TOKEN_EXPIRES.split("-").map(Number);
+      var left = Math.round((Date.UTC(a[0], a[1] - 1, a[2]) - today) / 864e5);
+      if (left > TOKEN_WARN_DAYS) return null;
+      var box = document.createElement("div");
+      box.className = "alert error token-alert";
+      box.setAttribute("role", "alert");
+      box.textContent = left > 0
+        ? "⚠️ 피클의 GitHub 토큰 만료가 " + left + "일 남았습니다 (" + TOKEN_EXPIRES + "). 만료되면 피클이 데이터를 갱신하지 못합니다. 클로드에게 문의하세요!"
+        : "⚠️ 피클의 GitHub 토큰이 만료됐습니다 (" + TOKEN_EXPIRES + "). 지금 화면은 마지막으로 저장된 데이터입니다. 클로드에게 문의하세요!";
+      return box;
+    }
 
     function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
     function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -257,6 +274,8 @@
         ws.appendChild(s1); ws.appendChild(s2); head.appendChild(ws);
       }
       app.appendChild(head);
+
+      var tw = tokenWarning(); if (tw) app.appendChild(tw);
 
       var today = todayStr();
       if (d.date !== today) {
