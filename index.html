@@ -38,7 +38,7 @@
     .num { font-variant-numeric: tabular-nums; }
 
     /* 날씨 헤더 */
-    header { position: relative; overflow: hidden; border-radius: 22px; min-height: 210px; padding: 24px 26px 22px; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; color: #fff; box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 18px 40px -20px rgba(15,23,42,.45); background: #4a6b8f; }
+    header { position: relative; overflow: hidden; border-radius: 22px; min-height: 230px; padding: 24px 26px 22px; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; color: #fff; box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 18px 40px -20px rgba(15,23,42,.45); background: #4a6b8f; }
     .sky-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     header::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,15,30,0) 20%, rgba(8,15,30,.45) 100%); pointer-events: none; }
     .header-top, .weather-strip { position: relative; z-index: 1; }
@@ -53,6 +53,16 @@
 
     /* 비·눈·구름 움직임 */
     .rain-fall { animation: rainFall 0.9s linear infinite; }
+    .rain-fall.slow { animation-duration: 1.4s; }
+    .tips { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tip { font-size: 13px; font-weight: 700; padding: 6px 11px; border-radius: 999px; background: rgba(255,255,255,.9); color: #1E293B; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+    .tip-hot { background: #FFEDD5; color: #9A3412; }
+    .tip-cold { background: #DBEAFE; color: #1E3A8A; }
+    .tip-cool { background: #E0F2FE; color: #075985; }
+    .tip-wet { background: #E0E7FF; color: #3730A3; }
+    .tip-warn { background: #FEF3C7; color: #92400E; }
+    .tip-bad { background: #FEE2E2; color: #991B1B; }
+    .tip-ok { background: #DCFCE7; color: #166534; }
     .snow-fall { animation: snowFall 9s linear infinite; }
     .snow-fall.slow { animation-duration: 14s; }
     .drift { animation: drift 40s ease-in-out infinite alternate; }
@@ -207,54 +217,98 @@
       if (w && Number(w.rainChance) >= 60) return "rain";
       return "clear";
     }
-    function cloud(x, y, s, fill, op) {
-      return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')" fill="' + fill + '" opacity="' + op + '">' +
-        '<ellipse cx="0" cy="18" rx="62" ry="22"/><circle cx="-26" cy="8" r="24"/><circle cx="8" cy="-4" r="32"/><circle cx="38" cy="10" r="22"/></g>';
+    var PAL = {
+      clear:  { sky: ["#2C74CF", "#7FB8EE", "#CFE6F7"], hills: ["#9DBEDD", "#7EA6CC", "#5E87B3", "#3F6690", "#2A4C72"], cloud: ["#FFFFFF", "#DCE9F6"], glow: "#FFE6A6" },
+      partly: { sky: ["#3F82CC", "#93C2EC", "#D7E8F5"], hills: ["#A3BFD9", "#86A6C6", "#6787AE", "#48688E", "#304E70"], cloud: ["#FFFFFF", "#D3E1EE"], glow: "#FFE6A6" },
+      cloudy: { sky: ["#5E7189", "#97A8BB", "#C9D3DE"], hills: ["#A9B5C3", "#909EAF", "#76869A", "#5D6D82", "#46566A"], cloud: ["#EEF2F6", "#B7C3D0"] },
+      rain:   { sky: ["#2C3644", "#4E5C6E", "#7D8A9A"], hills: ["#6F7C8C", "#5E6B7B", "#4C5969", "#3C4857", "#2D3845"], cloud: ["#5A6677", "#2E3946"] },
+      snow:   { sky: ["#7F93AA", "#B4C3D3", "#E3EAF1"], hills: ["#EEF3F8", "#DCE5EE", "#C7D3E0", "#B0BFCF", "#95A6BA"], cloud: ["#F4F7FA", "#CBD6E2"] }
+    };
+    function cloudG(x, y, s, op, cls) {
+      return '<g class="' + (cls || "") + '" opacity="' + op + '"><g transform="translate(' + x + ' ' + y + ') scale(' + s + ')" fill="url(#cg)">' +
+        '<ellipse cx="0" cy="22" rx="78" ry="24"/><circle cx="-34" cy="10" r="28"/><circle cx="6" cy="-6" r="38"/><circle cx="44" cy="10" r="26"/></g></g>';
     }
-    function hills(c1, c2, c3) {
-      return '<path d="M0 170 C 120 120 210 150 320 128 C 430 106 520 150 640 124 C 720 108 770 118 800 112 L800 240 L0 240 Z" fill="' + c1 + '"/>' +
-        '<path d="M0 196 C 140 160 260 188 400 168 C 540 148 650 186 800 160 L800 240 L0 240 Z" fill="' + c2 + '"/>' +
-        '<path d="M0 222 C 180 200 330 220 480 206 C 610 194 720 214 800 204 L800 240 L0 240 Z" fill="' + c3 + '"/>';
+    function ridge(y, amp, seed, fill) {
+      var d = "M0 " + y, i, x, yy;
+      for (i = 0; i <= 16; i++) {
+        x = i * 50;
+        yy = y - amp * (0.5 + 0.5 * Math.sin(i * 0.9 + seed) * Math.cos(i * 0.37 + seed * 1.7));
+        d += " Q " + (x - 25) + " " + (yy - amp * 0.25) + " " + x + " " + yy.toFixed(1);
+      }
+      return '<path d="' + d + ' L800 240 L0 240 Z" fill="' + fill + '"/>';
+    }
+    function trees(baseY, color) {
+      var t = "", i, x, h;
+      for (i = 0; i < 26; i++) {
+        x = 8 + i * 31 + (i % 3) * 6; h = 10 + (i * 7) % 9;
+        t += '<path d="M' + x + ' ' + baseY + ' l' + (h * 0.32).toFixed(1) + ' -' + h + ' l' + (h * 0.32).toFixed(1) + ' ' + h + ' Z"/>';
+      }
+      return '<g fill="' + color + '" opacity=".55">' + t + '</g>';
     }
     function sceneSVG(kind) {
-      var g = "", sky;
-      if (kind === "clear") {
-        sky = ["#2F7FE0", "#7DBDF7"];
-        g = '<circle cx="742" cy="44" r="58" fill="#FFE7A3" opacity=".35"/><circle cx="742" cy="44" r="32" fill="#FFD25E"/>' +
-            '<g class="drift">' + cloud(420, 60, .7, "#fff", .5) + '</g>' + hills("#5C9BD6", "#4C86BE", "#3E6F9E");
-      } else if (kind === "partly") {
-        sky = ["#4C8FD6", "#A3CDF3"];
-        g = '<circle cx="752" cy="40" r="30" fill="#FFD25E"/><g class="drift">' + cloud(712, 66, .75, "#fff", .95) + cloud(360, 56, .75, "#fff", .7) + '</g>' +
-            hills("#6A9CCB", "#5585B4", "#456F98");
-      } else if (kind === "cloudy") {
-        sky = ["#6E8299", "#B8C5D3"];
-        g = '<g class="drift">' + cloud(160, 70, 1.1, "#E8EDF3", .9) + cloud(500, 36, 1.1, "#D9E0E8", .95) + cloud(728, 40, .9, "#EEF2F6", .85) + '</g>' +
-            hills("#7D8FA3", "#6A7C91", "#58697D");
-      } else if (kind === "rain") {
-        sky = ["#3F4D60", "#7D8C9E"];
-        var drops = "";
-        for (var i = 0; i < 70; i++) {
-          var x = (i * 53) % 820, y = (i * 37) % 300 - 20;
-          drops += '<line x1="' + x + '" y1="' + y + '" x2="' + (x - 4) + '" y2="' + (y + 18) + '"/>';
-        }
-        g = '<g class="drift">' + cloud(170, 40, 1.3, "#2E3A49", .9) + cloud(470, 30, 1.5, "#364353", .95) + cloud(730, 46, 1.2, "#2B3644", .9) + '</g>' +
-            hills("#4E5D70", "#425062", "#364354") +
-            '<g class="rain-fall" stroke="#CFE2F5" stroke-width="2" stroke-linecap="round" opacity=".6">' + drops + '</g>';
-      } else {
-        sky = ["#8DA0B6", "#DCE5EE"];
-        var flakes = "", flakes2 = "";
-        for (var j = 0; j < 46; j++) {
-          var fx = (j * 71) % 800, fy = (j * 43) % 480 - 240;
-          flakes += '<circle cx="' + fx + '" cy="' + fy + '" r="' + (2 + (j % 3)) + '"/>';
-          flakes2 += '<circle cx="' + ((fx + 35) % 800) + '" cy="' + (fy + 120) + '" r="' + (1.5 + (j % 2)) + '"/>';
-        }
-        g = '<g class="drift">' + cloud(200, 40, 1.2, "#EEF3F8", .9) + cloud(700, 30, 1.0, "#E4EBF2", .9) + '</g>' +
-            hills("#E9EFF5", "#D6E0EA", "#C3CFDC") +
-            '<g class="snow-fall" fill="#fff" opacity=".95">' + flakes + '</g><g class="snow-fall slow" fill="#fff" opacity=".75">' + flakes2 + '</g>';
+      var p = PAL[kind] || PAL.clear, g = "";
+      var defs = '<defs>' +
+        '<linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + p.sky[0] + '"/><stop offset=".6" stop-color="' + p.sky[1] + '"/><stop offset="1" stop-color="' + p.sky[2] + '"/></linearGradient>' +
+        '<linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + p.cloud[0] + '"/><stop offset="1" stop-color="' + p.cloud[1] + '"/></linearGradient>' +
+        '<radialGradient id="glow"><stop offset="0" stop-color="' + (p.glow || "#fff") + '" stop-opacity=".75"/><stop offset=".35" stop-color="' + (p.glow || "#fff") + '" stop-opacity=".22"/><stop offset="1" stop-color="' + (p.glow || "#fff") + '" stop-opacity="0"/></radialGradient>' +
+        '<linearGradient id="haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".28"/></linearGradient>' +
+        '<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .07 0"/></filter>' +
+        '</defs>';
+      var bg = '<rect width="800" height="240" fill="url(#skyg)"/>';
+      if (kind === "clear" || kind === "partly") {
+        var sx = kind === "clear" ? 735 : 752, sy = kind === "clear" ? 46 : 40;
+        g += '<circle cx="' + sx + '" cy="' + sy + '" r="150" fill="url(#glow)"/>' +
+             '<circle cx="' + sx + '" cy="' + sy + '" r="' + (kind === "clear" ? 30 : 26) + '" fill="#FFE08A"/><circle cx="' + sx + '" cy="' + sy + '" r="' + (kind === "clear" ? 22 : 19) + '" fill="#FFF3C9"/>';
       }
-      return '<svg class="sky-scene" viewBox="0 0 800 240" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">' +
-        '<defs><linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + sky[0] + '"/><stop offset="1" stop-color="' + sky[1] + '"/></linearGradient></defs>' +
-        '<rect width="800" height="240" fill="url(#skyg)"/>' + g + '</svg>';
+      if (kind === "clear") g += cloudG(420, 64, .55, .55, "drift");
+      if (kind === "partly") g += cloudG(360, 58, .7, .75, "drift") + cloudG(712, 70, .8, .97, "drift");
+      if (kind === "cloudy") g += cloudG(150, 46, 1.1, .85, "drift") + cloudG(480, 30, 1.25, .95, "drift") + cloudG(735, 50, 1, .9, "drift") + cloudG(300, 80, .8, .7, "drift");
+      if (kind === "rain") g += cloudG(140, 26, 1.3, .95, "drift") + cloudG(460, 18, 1.5, .98, "drift") + cloudG(740, 30, 1.25, .95, "drift");
+      if (kind === "snow") g += cloudG(200, 30, 1.2, .9, "drift") + cloudG(700, 26, 1.1, .9, "drift");
+      g += ridge(150, 34, 0.4, p.hills[0]) + ridge(168, 30, 2.1, p.hills[1]) + '<rect y="120" width="800" height="120" fill="url(#haze)"/>' +
+           ridge(188, 26, 3.7, p.hills[2]) + trees(206, p.hills[4]) + ridge(208, 18, 5.2, p.hills[3]) + ridge(226, 12, 6.8, p.hills[4]);
+      if (kind === "rain") {
+        var d1 = "", d2 = "", i;
+        for (i = 0; i < 80; i++) { var x = (i * 53) % 820, y = (i * 37) % 300 - 20; d1 += '<line x1="' + x + '" y1="' + y + '" x2="' + (x - 5) + '" y2="' + (y + 20) + '"/>'; }
+        for (i = 0; i < 50; i++) { var x2 = (i * 67 + 20) % 820, y2 = (i * 29) % 300 - 20; d2 += '<line x1="' + x2 + '" y1="' + y2 + '" x2="' + (x2 - 3) + '" y2="' + (y2 + 12) + '"/>'; }
+        g += '<g class="rain-fall" stroke="#D6E6F5" stroke-width="1.8" stroke-linecap="round" opacity=".55">' + d1 + '</g>' +
+             '<g class="rain-fall slow" stroke="#D6E6F5" stroke-width="1.2" stroke-linecap="round" opacity=".35">' + d2 + '</g>' +
+             '<rect y="150" width="800" height="90" fill="#C9D6E3" opacity=".12"/>';
+      }
+      if (kind === "snow") {
+        var f1 = "", f2 = "", j;
+        for (j = 0; j < 50; j++) { var fx = (j * 71) % 800, fy = (j * 43) % 480 - 240; f1 += '<circle cx="' + fx + '" cy="' + fy + '" r="' + (2 + (j % 3)) + '"/>'; f2 += '<circle cx="' + ((fx + 35) % 800) + '" cy="' + (fy + 120) + '" r="' + (1.4 + (j % 2)) + '"/>'; }
+        g += '<g class="snow-fall" fill="#fff" opacity=".95">' + f1 + '</g><g class="snow-fall slow" fill="#fff" opacity=".7">' + f2 + '</g>';
+      }
+      return '<svg class="sky-scene" viewBox="0 0 800 240" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">' + defs + bg + g +
+        '<rect width="800" height="240" filter="url(#grain)"/></svg>';
+    }
+
+    /* ---- 날씨 한마디: 더위 많이 탐 + 자전거 퇴근 기준 ---- */
+    function weatherTips(w) {
+      var tips = [];
+      if (!w) return tips;
+      var max = Number(w.max), min = Number(w.min), sky = skyOf(w), rc = Number(w.rainChance) || 0;
+      if (!isNaN(max) && max >= 28) tips.push({ t: "🥵 많이 더워요 · 최대한 얇게", k: "hot" });
+      else if (!isNaN(max) && max >= 23) tips.push({ t: "😓 더운 편이에요 · 반팔 추천", k: "hot" });
+      else if (!isNaN(min) && min <= -5) tips.push({ t: "🥶 많이 추워요 · 두껍게 입으세요", k: "cold" });
+      else if (!isNaN(min) && min <= 0) tips.push({ t: "🧣 추워요 · 아침 영하권", k: "cold" });
+      else if (!isNaN(min) && min <= 8) tips.push({ t: "🧥 쌀쌀해요 · 겉옷 챙기세요", k: "cool" });
+      else if (!isNaN(max)) tips.push({ t: "🙂 선선해요", k: "ok" });
+      if (sky === "snow") tips.push({ t: "❄️ 눈 소식 · 미끄럼 주의", k: "wet" });
+      else if (sky === "rain") tips.push({ t: "☂️ 우산 챙기세요", k: "wet" });
+      else if (rc >= 40) tips.push({ t: "☂️ 우산 있으면 좋아요", k: "wet" });
+      var c = w.commute;
+      if (c && typeof c === "object") {
+        var wind = Number(c.wind), gust = Number(c.gust), feels = Number(c.feels), crc = Number(c.rainChance);
+        var at = c.time ? " (" + c.time + ")" : "";
+        if ((!isNaN(wind) && wind >= 9) || (!isNaN(gust) && gust >= 14)) tips.push({ t: "🚲 퇴근길 강풍" + at + " · 바람 " + (isNaN(wind) ? "?" : wind) + "m/s · 자전거 대신 대중교통 추천", k: "bad" });
+        else if (!isNaN(wind) && wind >= 5) tips.push({ t: "🚲 퇴근길 바람 강함" + at + " · " + wind + "m/s · 방풍 자켓 필수", k: "warn" });
+        if (!isNaN(feels) && feels <= 3) tips.push({ t: "🚲 퇴근길 체감 " + feels + "° · 장갑·넥워머 챙기세요", k: "warn" });
+        if (!isNaN(crc) && crc >= 40) tips.push({ t: "🚲 퇴근길 비 " + crc + "% · 우비 챙기세요", k: "warn" });
+        if (tips.filter(function (x) { return x.t.indexOf("🚲") === 0; }).length === 0) tips.push({ t: "🚲 퇴근길 자전거 무난해요" + at, k: "ok" });
+      }
+      return tips;
     }
 
     function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -471,6 +525,12 @@
         var s1 = el("span"); s1.appendChild(document.createTextNode("📍 " + (w.place || "") + ": ")); s1.appendChild(el("strong", "num", "최저 " + w.min + "°C / 최고 " + w.max + "°C"));
         var s2 = el("span"); s2.appendChild(document.createTextNode("☔ 강수확률 ")); s2.appendChild(el("strong", "num", w.rainChance + "%")); if (w.note) s2.appendChild(document.createTextNode(" (" + w.note + ")"));
         ws.appendChild(s1); ws.appendChild(s2); head.appendChild(ws);
+        var tips = weatherTips(w);
+        if (tips.length) {
+          var tr = el("div", "tips");
+          tips.forEach(function (x) { tr.appendChild(el("span", "tip tip-" + x.k, x.t)); });
+          head.appendChild(tr);
+        }
       }
       app.appendChild(head);
 
