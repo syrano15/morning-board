@@ -149,6 +149,38 @@
     .bluray-title { font-size: 14px; font-weight: 700; line-height: 1.45; }
     .bluray-meta { font-size: 12.5px; color: var(--text-muted); margin-top: auto; }
 
+    /* 레이더 캐러셀 */
+    .section-card.s-radar { --dot: #7C3AED; }
+    .radar-empty { word-break: keep-all; }
+    .radar-wrap { position: relative; padding: 14px 0 6px; }
+    .radar-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; }
+    .radar-track::-webkit-scrollbar { display: none; }
+    .radar-card { --tc: #64748B; --tb: #F1F5F9; flex: 0 0 calc((100% - 24px) / 3); scroll-snap-align: start; display: flex; gap: 12px; align-items: stretch; height: 132px; box-sizing: border-box; background: #F8FAFC; border: 1px solid var(--line); border-radius: 14px; padding: 10px; color: inherit; text-decoration: none; min-width: 0; }
+    .radar-card.t-tumblbug { --tc: #EA580C; --tb: #FFEDD5; }
+    .radar-card.t-bluray { --tc: #7C3AED; --tb: #EDE9FE; }
+    .radar-card.t-movie { --tc: #E11D48; --tb: #FFE4E6; }
+    .radar-card.t-game { --tc: #0D9488; --tb: #CCFBF1; }
+    a.radar-card { transition: border-color 150ms ease, transform 120ms var(--ease-out); }
+    a.radar-card:active { transform: scale(0.98); }
+    @media (hover: hover) and (pointer: fine) { a.radar-card:hover { border-color: #A5B4CB; } }
+    .radar-thumb { flex: none; width: 74px; height: 100%; border-radius: 8px; object-fit: cover; background: var(--tb); box-shadow: 0 2px 6px rgba(15,23,42,.14); }
+    .radar-ph { flex: none; width: 74px; height: 100%; border-radius: 8px; background: var(--tb); display: flex; align-items: center; justify-content: center; font-size: 30px; }
+    .radar-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .radar-badge { align-self: flex-start; font-size: 11.5px; font-weight: 800; color: var(--tc); background: var(--tb); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+    .radar-title { font-size: 14px; font-weight: 700; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
+    .radar-desc { font-size: 12.5px; line-height: 1.4; color: var(--text-muted); margin-top: auto; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
+    .radar-nav { position: absolute; top: calc(14px + 66px); transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; box-shadow: var(--shadow); display: none; align-items: center; justify-content: center; cursor: pointer; color: var(--text-sub); font-size: 16px; transition: opacity 150ms ease, transform 120ms var(--ease-out); }
+    .radar-nav:active { transform: translateY(-50%) scale(0.94); }
+    .radar-nav.prev { left: -12px; } .radar-nav.next { right: -12px; }
+    .radar-nav[disabled] { opacity: 0; pointer-events: none; }
+    .radar-wrap.scrollable .radar-nav { display: flex; }
+    .radar-dots { display: none; justify-content: center; gap: 6px; padding: 10px 0 4px; }
+    .radar-wrap.scrollable .radar-dots { display: flex; }
+    .radar-dot { width: 6px; height: 6px; border-radius: 999px; background: #CBD5E1; transition: width 200ms var(--ease-out), background-color 200ms ease; }
+    .radar-dot.on { width: 16px; background: #64748B; }
+    @media (max-width: 900px) { .radar-card { flex-basis: calc((100% - 12px) / 2); } }
+    @media (max-width: 640px) { .radar-card { flex-basis: 86%; } .radar-nav { display: none !important; } }
+
     .alert { background: #FFF7E6; border: 1px solid #F5C26B; color: #7A4100; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
     .alert.error { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
     .alert ul { margin: 6px 0 0 16px; }
@@ -174,7 +206,8 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .rain-fall, .snow-fall, .drift { animation: none; }
-      .btn:active, a.bluray-card:active { transform: none; }
+      .btn:active, a.bluray-card:active, a.radar-card:active, .radar-nav:active { transform: none; }
+      .radar-dot { transition: none; }
     }
   </style>
 </head>
@@ -346,18 +379,67 @@
       box.appendChild(input); box.appendChild(btn); app.appendChild(box); input.focus();
     }
 
+    var RADAR_TYPE = { tumblbug: "📚", bluray: "💿", movie: "🎬", game: "🎮" };
+
     function validate(d) {
       var errs = [];
       if (d.schema !== "morning-board/1") errs.push("schema 값이 morning-board/1이 아닙니다.");
       if (!/^\d{4}-\d{2}-\d{2}$/.test(d.date || "")) errs.push("date 형식이 YYYY-MM-DD가 아닙니다.");
       if (d.weather && d.weather.sky != null && !SKY[d.weather.sky]) errs.push("weather.sky는 clear·partly·cloudy·rain·snow 중 하나여야 합니다 (" + d.weather.sky + ").");
-      ["quests", "work", "benefits", "bluray"].forEach(function (k) {
+      if (d.radar != null) {
+        if (!Array.isArray(d.radar)) errs.push("radar는 배열이어야 합니다.");
+        else d.radar.forEach(function (it) { if (!RADAR_TYPE[it.type]) errs.push("radar / " + (it.title || "?") + ": type은 tumblbug·bluray·movie·game 중 하나여야 합니다 (" + it.type + ")."); });
+      } else if (!Array.isArray(d.bluray)) errs.push("radar 섹션이 없습니다.");
+      ["quests", "work", "benefits"].forEach(function (k) {
         if (!Array.isArray(d[k])) { errs.push(k + " 섹션이 없습니다."); return; }
-        if (k === "bluray") return;
         d[k].forEach(function (it) { if (!STATUS[it.status]) errs.push(k + " / " + (it.title || "?") + ": 정해진 status가 아닙니다 (" + it.status + ")."); });
         if (k === "quests") d[k].forEach(function (it) { if (it.board != null && it.board !== "work" && it.board !== "home") errs.push("quests / " + (it.title || "?") + ": board는 work 또는 home이어야 합니다 (" + it.board + ")."); });
       });
       return errs;
+    }
+
+    function radarBlock(list) {
+      var sec = section("📡 취향 & D-Day 레이더", list.length ? list.length + "건" : "", "radar");
+      if (!list.length) { sec.appendChild(el("div", "empty radar-empty", "현재 레이더에 포착된 신규 예판 및 D-Day 소식이 없습니다.")); return sec; }
+      var wrap = el("div", "radar-wrap"), track = el("div", "radar-track");
+      list.forEach(function (r) {
+        var card, ok = r.url && /^https:\/\//.test(r.url);
+        if (ok) { card = el("a", "radar-card"); card.href = r.url; card.target = "_blank"; card.rel = "noopener noreferrer"; }
+        else card = el("div", "radar-card");
+        if (RADAR_TYPE[r.type]) card.classList.add("t-" + r.type);
+        var ph = el("div", "radar-ph", RADAR_TYPE[r.type] || "📡");
+        if (r.image && /^https:\/\//.test(r.image)) {
+          var img = el("img", "radar-thumb"); img.alt = ""; img.decoding = "async"; img.referrerPolicy = "no-referrer";
+          img.addEventListener("error", function () { img.replaceWith(ph); });
+          img.src = r.image; card.appendChild(img);
+        } else card.appendChild(ph);
+        var t = el("div", "radar-text");
+        if (r.badge) t.appendChild(el("span", "radar-badge", r.badge));
+        t.appendChild(el("div", "radar-title", r.title || ""));
+        if (r.desc) { var de = el("div", "radar-desc", r.desc); de.title = r.desc; t.appendChild(de); }
+        card.appendChild(t);
+        track.appendChild(card);
+      });
+      var prev = el("button", "radar-nav prev", "‹"), next = el("button", "radar-nav next", "›");
+      prev.type = next.type = "button"; prev.setAttribute("aria-label", "이전"); next.setAttribute("aria-label", "다음");
+      var dots = el("div", "radar-dots");
+      function step() { var c = track.firstElementChild; return c ? c.getBoundingClientRect().width + 12 : track.clientWidth; }
+      function update() {
+        var max = track.scrollWidth - track.clientWidth;
+        wrap.classList.toggle("scrollable", max > 4);
+        prev.disabled = track.scrollLeft <= 4; next.disabled = track.scrollLeft >= max - 4;
+        var pages = Math.max(1, Math.round(max / step()) + 1), cur = Math.round(track.scrollLeft / step());
+        if (dots.children.length !== pages) { dots.innerHTML = ""; for (var k = 0; k < pages; k++) dots.appendChild(el("span", "radar-dot")); }
+        Array.prototype.forEach.call(dots.children, function (dEl, k) { dEl.classList.toggle("on", k === Math.min(cur, pages - 1)); });
+      }
+      prev.addEventListener("click", function () { track.scrollBy({ left: -step(), behavior: "smooth" }); });
+      next.addEventListener("click", function () { track.scrollBy({ left: step(), behavior: "smooth" }); });
+      var raf = 0; track.addEventListener("scroll", function () { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); }, { passive: true });
+      window.addEventListener("resize", update);
+      wrap.appendChild(track); wrap.appendChild(prev); wrap.appendChild(next); wrap.appendChild(dots);
+      sec.appendChild(wrap);
+      requestAnimationFrame(update);
+      return sec;
     }
 
     function load() {
@@ -563,29 +645,32 @@
       bn.appendChild(itemList(d.benefits, function (it) { return it.desc; }, "확인할 혜택이 없습니다."));
       app.appendChild(bn);
 
-      var br = section("🎬 알라딘 4K UHD 블루레이 신작 / 예판", (d.bluray || []).length ? d.bluray.length + "건" : "", "bluray");
-      if (!(d.bluray || []).length) br.appendChild(el("div", "empty", "새로 올라온 타이틀이 없습니다."));
+      if (Array.isArray(d.radar)) app.appendChild(radarBlock(d.radar));
       else {
-        var grid = el("div", "bluray-grid");
-        d.bluray.forEach(function (b) {
-          var card;
-          if (b.url && /^https:\/\//.test(b.url)) { card = el("a", "bluray-card"); card.href = b.url; card.target = "_blank"; card.rel = "noopener noreferrer"; }
-          else card = el("div", "bluray-card");
-          if (b.image && /^https:\/\//.test(b.image)) {
-            var img = el("img", "bluray-cover"); img.alt = ""; img.decoding = "async"; img.referrerPolicy = "no-referrer";
-            img.addEventListener("error", function () { img.remove(); });
-            img.src = b.image; card.appendChild(img);
-          }
-          var bt = el("div", "bluray-text");
-          if (b.edition) bt.appendChild(el("span", "bluray-tag", b.edition));
-          bt.appendChild(el("div", "bluray-title", b.title || ""));
-          if (b.discs) bt.appendChild(el("div", "bluray-meta", b.discs));
-          card.appendChild(bt);
-          grid.appendChild(card);
-        });
-        br.appendChild(grid);
+        var br = section("🎬 알라딘 4K UHD 블루레이 신작 / 예판", (d.bluray || []).length ? d.bluray.length + "건" : "", "bluray");
+        if (!(d.bluray || []).length) br.appendChild(el("div", "empty", "새로 올라온 타이틀이 없습니다."));
+        else {
+          var grid = el("div", "bluray-grid");
+          d.bluray.forEach(function (b) {
+            var card;
+            if (b.url && /^https:\/\//.test(b.url)) { card = el("a", "bluray-card"); card.href = b.url; card.target = "_blank"; card.rel = "noopener noreferrer"; }
+            else card = el("div", "bluray-card");
+            if (b.image && /^https:\/\//.test(b.image)) {
+              var img = el("img", "bluray-cover"); img.alt = ""; img.decoding = "async"; img.referrerPolicy = "no-referrer";
+              img.addEventListener("error", function () { img.remove(); });
+              img.src = b.image; card.appendChild(img);
+            }
+            var bt = el("div", "bluray-text");
+            if (b.edition) bt.appendChild(el("span", "bluray-tag", b.edition));
+            bt.appendChild(el("div", "bluray-title", b.title || ""));
+            if (b.discs) bt.appendChild(el("div", "bluray-meta", b.discs));
+            card.appendChild(bt);
+            grid.appendChild(card);
+          });
+          br.appendChild(grid);
+        }
+        app.appendChild(br);
       }
-      app.appendChild(br);
       app.appendChild(footer());
     }
 
