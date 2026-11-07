@@ -186,7 +186,7 @@
     function fail(msg) { app.innerHTML = ""; app.appendChild(el("div", "alert error", msg)); app.appendChild(footer()); }
     function footer() {
       var f = el("footer");
-      f.appendChild(el("span", null, "Pickle · Daily Morning Briefing"));
+      f.appendChild(el("span", null, "Pickle Assistant · Daily Morning Briefing v1.0"));
       var b = el("button", "link-btn", "Gist 연결 바꾸기");
       b.addEventListener("click", function () { setId(""); showSetup(); });
       f.appendChild(b); return f;
@@ -221,15 +221,15 @@
       var head = el("header");
       var top = el("div", "header-top");
       var tg = el("div");
-      tg.appendChild(el("h1", null, "모닝 브리핑"));
+      tg.appendChild(el("h1", null, "☀️ 모닝 브리핑"));
       tg.appendChild(el("div", "header-sub", dateLabel(d.date, true) + (gen ? " · " + (gen.h < 12 ? "오전 " : "오후 ") + ((gen.h % 12) || 12) + ":" + pad(gen.mi) + " 기준" : "")));
       top.appendChild(tg);
       top.appendChild(el("div", "badge-live", "피클 데일리 루틴"));
       head.appendChild(top);
       if (d.weather) {
         var w = d.weather, ws = el("div", "weather-strip");
-        var s1 = el("span"); s1.appendChild(document.createTextNode((w.place || "") + " ")); s1.appendChild(el("strong", "num", "최저 " + w.min + "° / 최고 " + w.max + "°"));
-        var s2 = el("span"); s2.appendChild(document.createTextNode("강수확률 ")); s2.appendChild(el("strong", "num", w.rainChance + "%")); if (w.note) s2.appendChild(document.createTextNode(" · " + w.note));
+        var s1 = el("span"); s1.appendChild(document.createTextNode("📍 " + (w.place || "") + ": ")); s1.appendChild(el("strong", "num", "최저 " + w.min + "°C / 최고 " + w.max + "°C"));
+        var s2 = el("span"); s2.appendChild(document.createTextNode("☔ 강수확률 ")); s2.appendChild(el("strong", "num", w.rainChance + "%")); if (w.note) s2.appendChild(document.createTextNode(" (" + w.note + ")"));
         ws.appendChild(s1); ws.appendChild(s2); head.appendChild(ws);
       }
       app.appendChild(head);
@@ -245,20 +245,20 @@
         al.appendChild(ul); app.appendChild(al);
       }
 
-      var q = section("오늘의 할 일", "데이로그");
+      var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그");
       q.appendChild(itemList(d.quests, function (it) { return it.desc; }, "오늘 등록된 할 일이 없습니다."));
       app.appendChild(q);
 
       var wk = (d.work || []).slice().sort(function (a, b) { return new Date(a.when) - new Date(b.when); });
-      var ws2 = section("회사 일정", wk.length ? wk.length + "건" : "");
+      var ws2 = section("💼 회사 리마인더 & 일정", wk.length ? wk.length + "건" : "");
       ws2.appendChild(itemList(wk, function (it) { return [whenLabel(it.when), it.place, it.desc].filter(Boolean).join(" · "); }, "예정된 회사 일정이 없습니다."));
       app.appendChild(ws2);
 
-      var bn = section("LG 유플러스 혜택", "");
+      var bn = section("🎁 LG 유플러스 혜택", "");
       bn.appendChild(itemList(d.benefits, function (it) { return it.desc; }, "확인할 혜택이 없습니다."));
       app.appendChild(bn);
 
-      var br = section("알라딘 4K UHD 신작 · 예판", (d.bluray || []).length ? d.bluray.length + "건" : "");
+      var br = section("🎬 알라딘 4K UHD 블루레이 신작 / 예판", (d.bluray || []).length ? d.bluray.length + "건" : "");
       if (!(d.bluray || []).length) br.appendChild(el("div", "empty", "새로 올라온 타이틀이 없습니다."));
       else {
         var grid = el("div", "bluray-grid");
