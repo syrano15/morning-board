@@ -50,6 +50,25 @@
     .weather-strip { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; }
     .weather-strip > span { background: rgba(15,23,42,.38); border: 1px solid rgba(255,255,255,.22); color: rgba(255,255,255,.92); padding: 7px 13px; border-radius: 11px; backdrop-filter: blur(8px); }
     .weather-strip strong { color: #fff; font-weight: 800; }
+    /* 강수 패널: 큰 숫자 + 시간대별 칸 + 작은 칩 */
+    .rain-panel { position: relative; z-index: 1; background: rgba(15,23,42,.42); border: 1px solid rgba(255,255,255,.2); border-radius: 14px; padding: 12px 14px 12px; backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 10px; }
+    .rain-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .rain-head .rh-label { font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,.85); }
+    .rain-head .rh-big { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #fff; line-height: 1; }
+    .rain-head .rh-word { font-size: 14px; font-weight: 700; color: rgba(255,255,255,.92); }
+    .rain-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); gap: 6px; }
+    .rain-slot { background: rgba(255,255,255,.08); border-radius: 10px; padding: 7px 8px 8px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .rain-slot .rs-time { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.72); white-space: nowrap; }
+    .rain-slot .rs-pct { font-size: 16px; font-weight: 800; color: #fff; line-height: 1.15; }
+    .rain-slot .rs-word { font-size: 11.5px; color: rgba(255,255,255,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rain-slot .rs-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.16); overflow: hidden; margin-top: 2px; }
+    .rain-slot .rs-bar > i { display: block; height: 100%; border-radius: 2px; background: #93C5FD; }
+    .rain-slot.hi .rs-bar > i { background: #60A5FA; }
+    .wx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .wx-chip { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.9); background: rgba(255,255,255,.1); border-radius: 999px; padding: 4px 10px; max-width: 100%; }
+    .wx-chip.bad { background: #FEE2E2; color: #991B1B; }
+    .wx-chip.vbad { background: #991B1B; color: #fff; }
+    .rain-note { font-size: 12.5px; line-height: 1.55; color: rgba(255,255,255,.78); }
 
     /* 비·눈·구름 움직임 */
     .rain-fall { animation: rainFall 0.9s linear infinite; }
@@ -356,6 +375,59 @@
       return tips;
     }
 
+    /* ---- 강수 패널 ----
+     * 새 형식(피클이 나눠서 넣는 값): rainWord, hourly[{time, rain, word}], wind, windWord,
+     *   sunrise, sunset, tomorrow{label, word, min, max}, dust{pm10, pm10Grade, pm25, pm25Grade}
+     * 옛 형식: note 한 줄만 있으면 " · " 기준으로 잘라 작은 칩으로 보여 준다. */
+    var DUST_BAD = { "나쁨": "bad", "매우나쁨": "vbad", "매우 나쁨": "vbad" };
+    function rainPanel(w) {
+      var p = el("div", "rain-panel");
+      var h = el("div", "rain-head");
+      h.appendChild(el("span", "rh-label", "☔ 강수확률"));
+      h.appendChild(el("span", "rh-big num", (w.rainChance != null ? w.rainChance : "-") + "%"));
+      if (w.rainWord) h.appendChild(el("span", "rh-word", w.rainWord));
+      p.appendChild(h);
+
+      var hourly = Array.isArray(w.hourly) ? w.hourly.filter(function (s) { return s && s.time; }) : [];
+      if (hourly.length) {
+        var g = el("div", "rain-slots");
+        hourly.forEach(function (s) {
+          var r = Number(s.rain), ok = !isNaN(r);
+          var c = el("div", "rain-slot" + (ok && r >= 60 ? " hi" : ""));
+          c.appendChild(el("span", "rs-time num", s.time));
+          c.appendChild(el("span", "rs-pct num", ok ? r + "%" : String(s.rain != null ? s.rain : "-")));
+          if (s.word) c.appendChild(el("span", "rs-word", s.word));
+          var b = el("span", "rs-bar"), f = el("i");
+          f.style.width = (ok ? Math.max(0, Math.min(100, r)) : 0) + "%";
+          b.appendChild(f); c.appendChild(b);
+          g.appendChild(c);
+        });
+        p.appendChild(g);
+      }
+
+      var chips = [];
+      var wind = Number(w.wind);
+      if (w.wind != null && !isNaN(wind)) chips.push({ t: "💨 바람 " + (w.windWord || (wind >= 9 ? "강함" : wind >= 4 ? "보통" : "약함")) + " " + wind + "m/s" });
+      if (w.sunrise || w.sunset) chips.push({ t: "🌅 " + (w.sunrise || "-") + " · 🌇 " + (w.sunset || "-") });
+      var tm = w.tomorrow;
+      if (tm && typeof tm === "object") chips.push({ t: (tm.label || "내일") + " " + (tm.word || "") + (tm.min != null && tm.max != null ? " " + tm.min + "~" + tm.max + "°" : "") });
+      var du = w.dust;
+      if (du && typeof du === "object") {
+        if (du.pm10 != null || du.pm10Grade) chips.push({ t: "미세먼지 " + (du.pm10Grade || "") + (du.pm10 != null ? " " + du.pm10 : ""), k: DUST_BAD[du.pm10Grade] });
+        if (du.pm25 != null || du.pm25Grade) chips.push({ t: "초미세 " + (du.pm25Grade || "") + (du.pm25 != null ? " " + du.pm25 : ""), k: DUST_BAD[du.pm25Grade] });
+      }
+      var structured = hourly.length || chips.length;
+      if (!structured && w.note) {
+        String(w.note).split(/\s*·\s*/).forEach(function (seg) { if (seg) chips.push({ t: seg }); });
+      }
+      if (chips.length) {
+        var cr = el("div", "wx-chips");
+        chips.forEach(function (x) { cr.appendChild(el("span", "wx-chip num" + (x.k ? " " + x.k : ""), x.t.replace(/\s+/g, " ").trim())); });
+        p.appendChild(cr);
+      }
+      return p;
+    }
+
     /* 쉬는 날: 토·일은 날짜로 자동 판단, 공휴일은 피클이 넣는 dayOff: true로 판단 */
     function isDayOff(d) {
       if (d && d.dayOff === true) return true;
@@ -626,8 +698,8 @@
       if (d.weather) {
         var w = d.weather, ws = el("div", "weather-strip");
         var s1 = el("span"); s1.appendChild(document.createTextNode("📍 " + (w.place || "") + ": ")); s1.appendChild(el("strong", "num", "최저 " + w.min + "°C / 최고 " + w.max + "°C"));
-        var s2 = el("span"); s2.appendChild(document.createTextNode("☔ 강수확률 ")); s2.appendChild(el("strong", "num", w.rainChance + "%")); if (w.note) s2.appendChild(document.createTextNode(" (" + w.note + ")"));
-        ws.appendChild(s1); ws.appendChild(s2); head.appendChild(ws);
+        ws.appendChild(s1); head.appendChild(ws);
+        head.appendChild(rainPanel(w));
         var tips = weatherTips(w, isDayOff(d));
         if (tips.length) {
           var tr = el("div", "tips");
