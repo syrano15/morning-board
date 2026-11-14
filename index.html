@@ -93,7 +93,6 @@
     .section-card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 22px 6px; box-shadow: var(--shadow); --dot: #64748B; }
     .section-card.s-quests { --dot: #2563EB; }
     .section-card.s-work { --dot: #0D9488; }
-    .section-card.s-benefits { --dot: #DB2777; }
     .section-card.s-bluray { --dot: #7C3AED; }
     .section-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft); gap: 8px; }
     .section-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
@@ -483,7 +482,7 @@
         if (!Array.isArray(d.radar)) errs.push("radar는 배열이어야 합니다.");
         else d.radar.forEach(function (it) { if (!RADAR_TYPE[it.type]) errs.push("radar / " + (it.title || "?") + ": type은 tumblbug·bluray·movie·game 중 하나여야 합니다 (" + it.type + ")."); });
       } else if (!Array.isArray(d.bluray)) errs.push("radar 섹션이 없습니다.");
-      ["quests", "work", "benefits"].forEach(function (k) {
+      ["quests", "work"].forEach(function (k) {
         if (!Array.isArray(d[k])) { errs.push(k + " 섹션이 없습니다."); return; }
         d[k].forEach(function (it) { if (!STATUS[it.status]) errs.push(k + " / " + (it.title || "?") + ": 정해진 status가 아닙니다 (" + it.status + ")."); });
         if (k === "quests") d[k].forEach(function (it) { if (it.board != null && it.board !== "work" && it.board !== "home") errs.push("quests / " + (it.title || "?") + ": board는 work 또는 home이어야 합니다 (" + it.board + ")."); });
@@ -733,10 +732,6 @@
       var ws2 = section("💼 회사 리마인더 & 일정", wk.length ? wk.length + "건" : "", "work");
       ws2.appendChild(itemList(wk, function (it) { return [whenLabel(it.when), it.place, it.desc].filter(Boolean).join(" · "); }, "예정된 회사 일정이 없습니다."));
       app.appendChild(ws2);
-
-      var bn = section("🎁 LG 유플러스 혜택", "", "benefits");
-      bn.appendChild(itemList(d.benefits, function (it) { return it.desc; }, "확인할 혜택이 없습니다."));
-      app.appendChild(bn);
 
       if (Array.isArray(d.radar)) app.appendChild(radarBlock(d.radar));
       else {
