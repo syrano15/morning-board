@@ -199,6 +199,19 @@
     @media (max-width: 900px) { .radar-card { flex-basis: calc((100% - 12px) / 2); } }
     @media (max-width: 640px) { .radar-card { flex-basis: 86%; } .radar-nav { display: none !important; } }
 
+    /* 주간·월간 리포트 카드 (report.json, 리포트 예약 작업이 씀) */
+    .section-card.s-report { --dot: #6D28D9; padding-bottom: 16px; }
+    .rp-line { font-size: 15px; line-height: 1.6; color: var(--text-main); padding: 12px 0 14px; word-break: keep-all; text-wrap: pretty; }
+    .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .rp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; border: 1px solid var(--line); background: #F8FAFC; color: var(--text-sub); transition: background-color 150ms ease, border-color 150ms ease, transform 120ms var(--ease-out); }
+    .rp-btn.primary { flex: 1; min-width: 160px; background: #6D28D9; border-color: #6D28D9; color: #fff; }
+    .rp-btn:active { transform: scale(0.97); }
+    .rp-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (hover: hover) and (pointer: fine) { .rp-btn:hover { border-color: #A5B4CB; } .rp-btn.primary:hover { background: #5B21B6; border-color: #5B21B6; } }
+    .rp-in { animation: rpIn 320ms var(--ease-out) both; }
+    @keyframes rpIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .rp-btn:active { transform: none; } .rp-in { animation: none; } }
+
     .alert { background: #FFF7E6; border: 1px solid #F5C26B; color: #7A4100; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
     .alert.error { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
     .alert ul { margin: 6px 0 0 16px; }
@@ -534,6 +547,41 @@
       return sec;
     }
 
+    /* ---- 주간·월간 리포트 카드 ----
+       report.json(같은 저장소)은 리포트 예약 작업이 리포트를 만들 때마다 고친다.
+       공개 저장소라 기록 요약 한 줄만 있고, 돈 이야기는 리포트 안에만 있다.
+       리포트 기간이 끝난 날부터 며칠만 보여 준다 (주간 4일, 월간 5일, 연간 7일). */
+    var REPORT_DAYS = { weekly: 4, monthly: 5, yearly: 7 };
+    var REPORT_NAME = { weekly: "주간 리포트", monthly: "월간 리포트", yearly: "연간 리포트" };
+    var reportsP = fetch("report.json", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+    function dayNum(s) { var a = String(s || "").split("-").map(Number); return a.length === 3 ? Date.UTC(a[0], a[1] - 1, a[2]) / 864e5 : NaN; }
+    function activeReports(j) {
+      var t = dayNum(todayStr()), out = [];
+      ["yearly", "monthly", "weekly"].forEach(function (k) {
+        var it = j && j.items && j.items[k];
+        if (!it || !it.range || !/^https:\/\//.test(it.artifact || "")) return;
+        var e = dayNum(it.range.end);
+        if (t >= e && t <= e + REPORT_DAYS[k]) out.push(it);
+      });
+      return out;
+    }
+    function shortDate(s) { var a = String(s).split("-").map(Number); return a[1] + "." + pad(a[2]); }
+    function reportCard(it) {
+      var name = REPORT_NAME[it.kind] || "리포트";
+      var lab = String(it.label || "").replace(/^\d{4}년\s*/, "");
+      var s = section("📊 " + name + (lab ? " · " + lab : ""), shortDate(it.range.start) + " – " + shortDate(it.range.end), "report");
+      s.classList.add("rp-in");
+      if (it.line) s.appendChild(el("p", "rp-line", String(it.line).replace(/ 할 일/g, "\u00a0할\u00a0일")));
+      var acts = el("div", "rp-actions");
+      var a1 = el("a", "rp-btn primary", "리포트 보기 ↗"); a1.href = it.artifact; a1.target = "_blank"; a1.rel = "noopener noreferrer";
+      acts.appendChild(a1);
+      if (/^https:\/\//.test(it.pdf || "")) { var a2 = el("a", "rp-btn", "PDF 원본"); a2.href = it.pdf; a2.target = "_blank"; a2.rel = "noopener noreferrer"; acts.appendChild(a2); }
+      s.appendChild(acts);
+      return s;
+    }
+
     function load() {
       var id = getId();
       if (!id) { showSetup(); return; }
@@ -720,6 +768,9 @@
         var ul = el("ul"); errs.slice(0, 8).forEach(function (m) { ul.appendChild(el("li", null, m)); });
         al.appendChild(ul); app.appendChild(al);
       }
+
+      var rpSlot = el("div"); rpSlot.style.display = "contents"; app.appendChild(rpSlot);
+      reportsP.then(function (j) { activeReports(j).forEach(function (it) { rpSlot.appendChild(reportCard(it)); }); });
 
       var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그", "quests");
       var qItems = d.quests || [], qNote = "";
