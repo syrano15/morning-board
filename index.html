@@ -204,10 +204,16 @@
     .rp-line { font-size: 15px; line-height: 1.6; color: var(--text-main); padding: 12px 0 14px; word-break: keep-all; text-wrap: pretty; }
     .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .rp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; border: 1px solid var(--line); background: #F8FAFC; color: var(--text-sub); transition: background-color 150ms ease, border-color 150ms ease, transform 120ms var(--ease-out); }
-    .rp-btn.primary { flex: 1; min-width: 160px; background: #6D28D9; border-color: #6D28D9; color: #fff; }
+    .rp-actions .rp-btn { flex: 1 1 0; }
+    .rp-btn.primary { flex: 1 1 100%; background: #6D28D9; border-color: #6D28D9; color: #fff; }
     .rp-btn:active { transform: scale(0.97); }
     .rp-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     @media (hover: hover) and (pointer: fine) { .rp-btn:hover { border-color: #A5B4CB; } .rp-btn.primary:hover { background: #5B21B6; border-color: #5B21B6; } }
+    .section-card.rp-mini { padding: 0; }
+    .rp-mini-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 22px; color: var(--text-main); text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 18px; transition: background-color 150ms ease, transform 120ms var(--ease-out); }
+    .rp-mini-link:active { transform: scale(0.98); }
+    .rp-mini-g { color: #6D28D9; font-weight: 800; }
+    @media (hover: hover) and (pointer: fine) { .rp-mini-link:hover { background: #F5F3FF; } }
     .rp-in { animation: rpIn 320ms var(--ease-out) both; }
     @keyframes rpIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) { .rp-btn:active { transform: none; } .rp-in { animation: none; } }
@@ -568,6 +574,7 @@
       return out;
     }
     function shortDate(s) { var a = String(s).split("-").map(Number); return a[1] + "." + pad(a[2]); }
+    var archive = "";
     function reportCard(it) {
       var name = REPORT_NAME[it.kind] || "리포트";
       var lab = String(it.label || "").replace(/^\d{4}년\s*/, "");
@@ -578,8 +585,18 @@
       var a1 = el("a", "rp-btn primary", "리포트 보기 ↗"); a1.href = it.artifact; a1.target = "_blank"; a1.rel = "noopener noreferrer";
       acts.appendChild(a1);
       if (/^https:\/\//.test(it.pdf || "")) { var a2 = el("a", "rp-btn", "PDF 원본"); a2.href = it.pdf; a2.target = "_blank"; a2.rel = "noopener noreferrer"; acts.appendChild(a2); }
+      if (archive) acts.appendChild(archiveBtn(archive));
       s.appendChild(acts);
       return s;
+    }
+    function archiveBtn(url) { var a = el("a", "rp-btn", "지난 리포트"); a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; }
+    /* 이번 주 카드가 없는 날에도 지난 리포트로 가는 한 줄 */
+    function archiveRow(url) {
+      var s = el("section", "section-card s-report rp-mini");
+      var a = el("a", "rp-mini-link"); a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.appendChild(el("span", "rp-mini-t", "📊 지난 리포트 모아보기"));
+      a.appendChild(el("span", "rp-mini-g", "↗"));
+      s.appendChild(a); return s;
     }
 
     function load() {
@@ -770,7 +787,12 @@
       }
 
       var rpSlot = el("div"); rpSlot.style.display = "contents"; app.appendChild(rpSlot);
-      reportsP.then(function (j) { activeReports(j).forEach(function (it) { rpSlot.appendChild(reportCard(it)); }); });
+      reportsP.then(function (j) {
+        archive = j && /^https:\/\//.test(j.archive || "") ? j.archive : "";
+        var act = activeReports(j);
+        act.forEach(function (it) { rpSlot.appendChild(reportCard(it)); });
+        if (!act.length && archive) rpSlot.appendChild(archiveRow(archive));
+      });
 
       var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그", "quests");
       var qItems = d.quests || [], qNote = "";
