@@ -245,12 +245,15 @@
     .wk-time { flex: none; font-size: 13px; font-weight: 800; color: #0F766E; background: #CCFBF1; padding: 3px 8px; border-radius: 7px; margin-top: 1px; }
     .wk-title { flex: 1; min-width: 0; font-size: 15.5px; font-weight: 800; line-height: 1.45; color: var(--text-main); word-break: keep-all; text-wrap: pretty; }
     .wk-top .tag { flex: none; margin-top: 1px; }
-    .wk-place { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; color: #475569; background: #E2E8F0; padding: 2px 8px; border-radius: 6px; }
-    .wk-desc { margin-top: 8px; font-size: 14px; line-height: 1.65; color: var(--text-sub); word-break: keep-all; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .wk-desc.open { display: block; }
-    .wk-more { margin-top: 4px; background: none; border: 0; padding: 6px 0; font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; min-height: 32px; }
+    .wk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+    .wk-place { display: inline-block; font-size: 12px; font-weight: 700; color: #475569; background: #E2E8F0; padding: 2px 8px; border-radius: 6px; }
+    .wk-desc { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 14px; line-height: 1.7; color: var(--text-sub); word-break: keep-all; overflow-wrap: anywhere; max-width: 78ch; }
+    .wk-desc[hidden] { display: none; }
+    .wk-item.has-desc { cursor: pointer; }
+    .wk-more { flex: none; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: transform 120ms var(--ease-out), border-color 150ms ease; }
+    .wk-more:active { transform: scale(0.95); }
+    .wk-item.open .wk-more { color: var(--accent); border-color: #BFDBFE; }
     .wk-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-    @media (min-width: 900px) { .wk-desc { -webkit-line-clamp: 2; max-width: 78ch; } }
     .alert { background: #FFF7E6; border: 1px solid #F5C26B; color: #7A4100; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
     .alert.error { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
     .alert ul { margin: 6px 0 0 16px; }
@@ -815,17 +818,19 @@
       var hasTime = p && (p.h || p.mi);
       if (hasTime) top.appendChild(el("span", "wk-time num", pad(p.h) + ":" + pad(p.mi)));
       top.appendChild(el("span", "wk-title", it.title || ""));
-      var lab = STATUS[it.status]; if (lab) top.appendChild(el("span", "tag tag-" + it.status, lab));
       row.appendChild(top);
-      if (it.place) row.appendChild(el("div", "wk-place", it.place));
+      var meta = el("div", "wk-meta");
+      var lab = STATUS[it.status]; if (lab) meta.appendChild(el("span", "tag tag-" + it.status, lab));
+      if (it.place) meta.appendChild(el("span", "wk-place", it.place));
+      if (meta.childNodes.length) row.appendChild(meta);
       if (it.desc) {
-        var d = el("p", "wk-desc", it.desc); row.appendChild(d);
-        requestAnimationFrame(function () {
-          if (d.scrollHeight - d.clientHeight < 4) return;
-          var more = el("button", "wk-more", "더 보기"); more.type = "button"; more.setAttribute("aria-expanded", "false");
-          more.addEventListener("click", function () { var open = d.classList.toggle("open"); more.textContent = open ? "접기" : "더 보기"; more.setAttribute("aria-expanded", open ? "true" : "false"); });
-          row.appendChild(more);
-        });
+        var d = el("p", "wk-desc", it.desc); d.hidden = true; row.appendChild(d);
+        var more = el("button", "wk-more", "자세히"); more.type = "button"; more.setAttribute("aria-expanded", "false");
+        top.appendChild(more);
+        var toggle = function () { var open = d.hidden; d.hidden = !open; row.classList.toggle("open", open); more.textContent = open ? "접기" : "자세히"; more.setAttribute("aria-expanded", open ? "true" : "false"); };
+        more.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+        row.addEventListener("click", toggle);
+        row.classList.add("has-desc");
       }
       return row;
     }
