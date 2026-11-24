@@ -203,12 +203,22 @@
     .section-card.s-report { --dot: #6D28D9; padding-bottom: 16px; }
     .rp-line { font-size: 15px; line-height: 1.6; color: var(--text-main); padding: 12px 0 14px; word-break: keep-all; text-wrap: pretty; }
     .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .rp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; border: 1px solid var(--line); background: #F8FAFC; color: var(--text-sub); transition: background-color 150ms ease, border-color 150ms ease, transform 120ms var(--ease-out); }
+    .rp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; padding: 9px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 700; text-decoration: none; border: 1px solid var(--line); background: #F8FAFC; color: var(--text-sub); transition: background-color 150ms ease, border-color 150ms ease, transform 120ms var(--ease-out); }
     .rp-actions .rp-btn { flex: 1 1 0; }
-    .rp-btn.primary { flex: 1 1 100%; background: #6D28D9; border-color: #6D28D9; color: #fff; }
+    /* 리포트 보기: 어두운 보라 그라데이션 + 빛이 한 번씩 훑고 지나가는 버튼 */
+    .rp-btn.primary { flex: 1 1 100%; position: relative; overflow: hidden; isolation: isolate; justify-content: space-between; gap: 14px; min-height: 64px; padding: 12px 12px 12px 20px; border: 0; border-radius: 16px; color: #fff; text-align: left;
+      background: radial-gradient(120% 140% at 0% 0%, #7C3AED 0%, transparent 55%), radial-gradient(90% 120% at 100% 100%, #2563EB 0%, transparent 60%), #1E1B4B;
+      box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 12px 28px -14px rgba(76,29,149,.75); }
+    .rp-btn.primary::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.22) 48%, transparent 66%); transform: translateX(-100%); animation: rpSheen 5.5s var(--ease-out) 1.2s infinite; }
+    @keyframes rpSheen { 0% { transform: translateX(-100%); } 28%, 100% { transform: translateX(100%); } }
+    .rp-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .rp-tx b { font-size: 16px; font-weight: 800; letter-spacing: -0.2px; }
+    .rp-tx small { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rp-go { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); transition: transform 200ms var(--ease-out), background-color 150ms ease; }
+    .rp-go svg { width: 18px; height: 18px; }
     .rp-btn:active { transform: scale(0.97); }
     .rp-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    @media (hover: hover) and (pointer: fine) { .rp-btn:hover { border-color: #A5B4CB; } .rp-btn.primary:hover { background: #5B21B6; border-color: #5B21B6; } }
+    @media (hover: hover) and (pointer: fine) { .rp-btn:hover { border-color: #A5B4CB; } .rp-btn.primary:hover .rp-go { transform: translate(2px, -2px); background: rgba(255,255,255,.24); } }
     .section-card.rp-mini { padding: 0; }
     .rp-mini-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 22px; color: var(--text-main); text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 18px; transition: background-color 150ms ease, transform 120ms var(--ease-out); }
     .rp-mini-link:active { transform: scale(0.98); }
@@ -216,8 +226,31 @@
     @media (hover: hover) and (pointer: fine) { .rp-mini-link:hover { background: #F5F3FF; } }
     .rp-in { animation: rpIn 320ms var(--ease-out) both; }
     @keyframes rpIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-    @media (prefers-reduced-motion: reduce) { .rp-btn:active { transform: none; } .rp-in { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .rp-btn:active { transform: none; } .rp-in { animation: none; } .rp-btn.primary::after { animation: none; display: none; } }
 
+    /* 회사 리마인더 */
+    .wk-wrap { padding: 4px 0 12px; }
+    .wk-day { display: flex; align-items: baseline; gap: 8px; padding: 14px 0 8px; }
+    .wk-dname { font-size: 15px; font-weight: 800; color: var(--text-main); }
+    .wk-day.is-today .wk-dname { color: #0F766E; }
+    .wk-dsub { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .wk-dn { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+    .wk-item { position: relative; padding: 13px 14px 13px 18px; margin-bottom: 8px; border-radius: 14px; background: #F8FAFC; border: 1px solid var(--line-soft); }
+    .wk-item::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px; border-radius: 0 4px 4px 0; background: #0D9488; }
+    .wk-item.s-due { background: #FFF7F7; border-color: #FBD5D5; }
+    .wk-item.s-due::before { background: #DC2626; }
+    .wk-item.s-info::before { background: #0284C7; }
+    .wk-item.s-done { opacity: .6; }
+    .wk-top { display: flex; align-items: flex-start; gap: 10px; }
+    .wk-time { flex: none; font-size: 13px; font-weight: 800; color: #0F766E; background: #CCFBF1; padding: 3px 8px; border-radius: 7px; margin-top: 1px; }
+    .wk-title { flex: 1; min-width: 0; font-size: 15.5px; font-weight: 800; line-height: 1.45; color: var(--text-main); word-break: keep-all; text-wrap: pretty; }
+    .wk-top .tag { flex: none; margin-top: 1px; }
+    .wk-place { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; color: #475569; background: #E2E8F0; padding: 2px 8px; border-radius: 6px; }
+    .wk-desc { margin-top: 8px; font-size: 14px; line-height: 1.65; color: var(--text-sub); word-break: keep-all; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .wk-desc.open { display: block; }
+    .wk-more { margin-top: 4px; background: none; border: 0; padding: 6px 0; font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; min-height: 32px; }
+    .wk-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    @media (min-width: 900px) { .wk-desc { -webkit-line-clamp: 2; max-width: 78ch; } }
     .alert { background: #FFF7E6; border: 1px solid #F5C26B; color: #7A4100; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
     .alert.error { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
     .alert ul { margin: 6px 0 0 16px; }
@@ -582,9 +615,15 @@
       s.classList.add("rp-in");
       if (it.line) s.appendChild(el("p", "rp-line", String(it.line).replace(/ 할 일/g, "\u00a0할\u00a0일")));
       var acts = el("div", "rp-actions");
-      var a1 = el("a", "rp-btn primary", "리포트 보기 ↗"); a1.href = it.artifact; a1.target = "_blank"; a1.rel = "noopener noreferrer";
+      var a1 = el("a", "rp-btn primary"); a1.href = it.artifact; a1.target = "_blank"; a1.rel = "noopener noreferrer";
+      var tx = el("span", "rp-tx"); tx.appendChild(el("b", null, "리포트 보기"));
+      tx.appendChild(el("small", null, "애니메이션 원본 · " + shortDate(it.range.start) + " – " + shortDate(it.range.end)));
+      a1.appendChild(tx);
+      var go = el("span", "rp-go"); go.setAttribute("aria-hidden", "true");
+      go.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
+      a1.appendChild(go);
       acts.appendChild(a1);
-      if (/^https:\/\//.test(it.pdf || "")) { var a2 = el("a", "rp-btn", "PDF 원본"); a2.href = it.pdf; a2.target = "_blank"; a2.rel = "noopener noreferrer"; acts.appendChild(a2); }
+      if (/^https:\/\//.test(it.pdf || "")) { var a2 = el("a", "rp-btn", "PDF 사본"); a2.href = it.pdf; a2.target = "_blank"; a2.rel = "noopener noreferrer"; acts.appendChild(a2); }
       if (archive) acts.appendChild(archiveBtn(archive));
       s.appendChild(acts);
       return s;
@@ -745,6 +784,52 @@
       return wrap;
     }
 
+    /* ---- 회사 리마인더: 날짜별로 묶고, 설명은 제목 아래 전체 폭 2줄 + 더 보기 ---- */
+    var PRI = { due: 0, todo: 1, info: 2, unused: 3, done: 4 };
+    function workBlock(list) {
+      var box = el("div", "wk-wrap");
+      if (!list.length) { box.appendChild(el("div", "empty", "예정된 회사 일정이 없습니다.")); return box; }
+      var today = todayStr(), groups = {}, order = [];
+      list.forEach(function (it) {
+        var p = kst(it.when); var key = p ? p.y + "-" + pad(p.m) + "-" + pad(p.d) : "기타";
+        if (!groups[key]) { groups[key] = []; order.push(key); }
+        groups[key].push(it);
+      });
+      order.forEach(function (key) {
+        var a = key.split("-").map(Number), t = String(today).split("-").map(Number);
+        var diff = a.length === 3 ? Math.round((Date.UTC(a[0], a[1] - 1, a[2]) - Date.UTC(t[0], t[1] - 1, t[2])) / 864e5) : null;
+        var hd = el("div", "wk-day" + (diff === 0 ? " is-today" : ""));
+        hd.appendChild(el("span", "wk-dname", diff === 0 ? "오늘" : diff === 1 ? "내일" : diff === -1 ? "어제" : diff != null && diff < 0 ? "지난 일정" : dateLabel(key)));
+        if (diff === 0 || diff === 1 || diff === -1) hd.appendChild(el("span", "wk-dsub", dateLabel(key)));
+        hd.appendChild(el("span", "wk-dn", groups[key].length + "건"));
+        box.appendChild(hd);
+        groups[key].sort(function (x, y) { return (PRI[x.status] == null ? 9 : PRI[x.status]) - (PRI[y.status] == null ? 9 : PRI[y.status]) || new Date(x.when) - new Date(y.when); });
+        groups[key].forEach(function (it) { box.appendChild(workItem(it)); });
+      });
+      return box;
+    }
+    function workItem(it) {
+      var row = el("div", "wk-item s-" + (it.status || "todo"));
+      var top = el("div", "wk-top");
+      var p = kst(it.when);
+      var hasTime = p && (p.h || p.mi);
+      if (hasTime) top.appendChild(el("span", "wk-time num", pad(p.h) + ":" + pad(p.mi)));
+      top.appendChild(el("span", "wk-title", it.title || ""));
+      var lab = STATUS[it.status]; if (lab) top.appendChild(el("span", "tag tag-" + it.status, lab));
+      row.appendChild(top);
+      if (it.place) row.appendChild(el("div", "wk-place", it.place));
+      if (it.desc) {
+        var d = el("p", "wk-desc", it.desc); row.appendChild(d);
+        requestAnimationFrame(function () {
+          if (d.scrollHeight - d.clientHeight < 4) return;
+          var more = el("button", "wk-more", "더 보기"); more.type = "button"; more.setAttribute("aria-expanded", "false");
+          more.addEventListener("click", function () { var open = d.classList.toggle("open"); more.textContent = open ? "접기" : "더 보기"; more.setAttribute("aria-expanded", open ? "true" : "false"); });
+          row.appendChild(more);
+        });
+      }
+      return row;
+    }
+
     function render(d, errs, dl) {
       app.innerHTML = "";
       var gen = kst(d.generatedAt);
@@ -803,7 +888,7 @@
 
       var wk = (d.work || []).slice().sort(function (a, b) { return new Date(a.when) - new Date(b.when); });
       var ws2 = section("💼 회사 리마인더 & 일정", wk.length ? wk.length + "건" : "", "work");
-      ws2.appendChild(itemList(wk, function (it) { return [whenLabel(it.when), it.place, it.desc].filter(Boolean).join(" · "); }, "예정된 회사 일정이 없습니다."));
+      ws2.appendChild(workBlock(wk));
       app.appendChild(ws2);
 
       if (Array.isArray(d.radar)) app.appendChild(radarBlock(d.radar));
