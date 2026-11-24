@@ -221,6 +221,33 @@
     @keyframes rpIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) { .rp-btn:active { transform: none; } .rp-in { animation: none; } }
 
+    /* 어제 영어 (latest.json의 english, 피클이 05:00에 씀) */
+    .section-card.s-english { --dot: #0891B2; padding-bottom: 14px; }
+    .en-stats { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0 4px; font-size: 13.5px; color: var(--text-sub); }
+    .en-stats b { color: var(--text-main); font-weight: 800; }
+    .en-stats .dim { color: var(--text-muted); }
+    .en-list { display: flex; flex-direction: column; }
+    .en-list[hidden] { display: none; }
+    .s-english .section-meta { white-space: nowrap; }
+    .en-topic { padding-top: 12px; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+    .en-row { padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
+    .en-row:last-child { border-bottom: none; }
+    .en-said { font-size: 13.5px; line-height: 1.55; color: var(--text-muted); word-break: keep-all; overflow-wrap: break-word; }
+    .en-better { margin-top: 3px; font-size: 15.5px; line-height: 1.5; font-weight: 700; color: var(--text-main); word-break: keep-all; overflow-wrap: break-word; }
+    .en-better::before { content: "→ "; color: #0891B2; font-weight: 800; }
+    .en-row.same .en-better::before { content: "✓ "; }
+    .en-row.unsure .en-better { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .en-row.unsure .en-better::before { content: ""; }
+    .en-expr { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 0 2px; }
+    .en-chip { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: #ECFEFF; border: 1px solid #A5F3FC; color: #155E75; }
+    .en-chip span { color: var(--text-muted); margin-left: 4px; }
+    .en-more { margin-top: 8px; width: 100%; min-height: 40px; border-radius: 12px; border: 1px solid var(--line); background: #F8FAFC; color: var(--text-sub); font-size: 13.5px; font-weight: 700; cursor: pointer; transition: border-color 150ms ease, transform 120ms var(--ease-out); }
+    .en-more[aria-expanded="true"] { color: #1D4ED8; background: #EFF6FF; border-color: #BFDBFE; }
+    .en-more:active { transform: scale(0.98); }
+    .en-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (hover: hover) and (pointer: fine) { .en-more:hover { border-color: #A5B4CB; } }
+    @media (prefers-reduced-motion: reduce) { .en-more:active { transform: none; } }
+
     /* 회사 리마인더 */
     .wk-wrap { padding: 4px 0 12px; }
     .wk-day { display: flex; align-items: baseline; gap: 8px; padding: 14px 0 8px; }
@@ -630,6 +657,61 @@
       s.appendChild(a); return s;
     }
 
+    /* ---- 어제 영어: 피클이 latest.json의 english에 전날 통화를 넣어 둔다 ----
+       고친 문장 중 긴 것 3개만 먼저 보여 주고, 전체는 [전체 보기]로 펼친다. */
+    function enNorm(t) { return String(t || "").toLowerCase().replace(/[^a-z0-9']+/g, " ").trim(); }
+    function englishCard(e) {
+      var lines = (Array.isArray(e.lines) ? e.lines : []).filter(function (l) { return l && l.said; });
+      if (!lines.length) return null;
+      lines = lines.map(function (l, i) {
+        var unsure = /인식\s*불확실/.test(l.better || "");
+        var same = !unsure && (!l.better || enNorm(l.better) === enNorm(l.said));
+        return { said: l.said, better: l.better || l.said, unsure: unsure, same: same, i: i };
+      });
+      var fixed = lines.filter(function (l) { return !l.unsure && !l.same; });
+      var good = lines.filter(function (l) { return l.same; }).length;
+      var unsureN = lines.filter(function (l) { return l.unsure; }).length;
+      var meta = (e.date ? shortDate(e.date) : "") + (e.duration ? " · " + e.duration : "");
+      var s = section("🗣️ 어제 영어", meta, "english");
+      if (e.topic) s.appendChild(el("div", "en-topic", e.topic));
+      var st = el("div", "en-stats num");
+      function stat(label, n, cls) { var x = el("span", cls || null); x.appendChild(document.createTextNode(label + " ")); x.appendChild(el("b", null, String(n))); return x; }
+      st.appendChild(stat("문장", lines.length - unsureN));
+      st.appendChild(stat("통과", good));
+      st.appendChild(stat("고침", fixed.length));
+      if (unsureN) st.appendChild(stat("못 알아들음", unsureN, "dim"));
+      s.appendChild(st);
+      function row(l) {
+        var r = el("div", "en-row" + (l.same ? " same" : "") + (l.unsure ? " unsure" : ""));
+        if (!l.same) r.appendChild(el("div", "en-said", l.said));
+        r.appendChild(el("div", "en-better", l.unsure ? "잘못 알아들은 듯 (인식 불확실)" : l.better));
+        return r;
+      }
+      var top = fixed.slice().sort(function (a, b) { return b.said.length - a.said.length; }).slice(0, 3).sort(function (a, b) { return a.i - b.i; });
+      var pick = el("div", "en-list");
+      if (top.length) top.forEach(function (l) { pick.appendChild(row(l)); });
+      else pick.appendChild(el("div", "empty", "고칠 문장이 없었어요."));
+      s.appendChild(pick);
+      var ex = (Array.isArray(e.expressions) ? e.expressions : []).filter(function (x) { return x && x.en; });
+      if (ex.length) {
+        var ew = el("div", "en-expr");
+        ex.forEach(function (x) { var c = el("span", "en-chip", x.en); if (x.ko) c.appendChild(el("span", null, x.ko)); ew.appendChild(c); });
+        s.appendChild(ew);
+      }
+      if (lines.length > top.length) {
+        var all = el("div", "en-list"); all.hidden = true;
+        lines.forEach(function (l) { all.appendChild(row(l)); });
+        var b = el("button", "en-more", "대화 전체 보기 (" + lines.length + "문장)"); b.type = "button"; b.setAttribute("aria-expanded", "false");
+        b.addEventListener("click", function () {
+          var open = all.hidden; all.hidden = !open; pick.hidden = open;
+          b.textContent = open ? "접기" : "대화 전체 보기 (" + lines.length + "문장)";
+          b.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+        s.appendChild(all); s.appendChild(b);
+      }
+      return s;
+    }
+
     function load() {
       var id = getId();
       if (!id) { showSetup(); return; }
@@ -872,6 +954,8 @@
         act.forEach(function (it) { rpSlot.appendChild(reportCard(it)); });
         if (!act.length && archive) rpSlot.appendChild(archiveRow(archive));
       });
+
+      if (d.english && typeof d.english === "object") { var en = englishCard(d.english); if (en) app.appendChild(en); }
 
       var q = section("📋 오늘의 할 일 (퀘스트보드)", "데이로그", "quests");
       var qItems = d.quests || [], qNote = "";
