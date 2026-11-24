@@ -204,21 +204,14 @@
     .rp-line { font-size: 15px; line-height: 1.6; color: var(--text-main); padding: 12px 0 14px; word-break: keep-all; text-wrap: pretty; }
     .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .rp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; padding: 9px 14px; border-radius: 12px; font-size: 13.5px; font-weight: 700; text-decoration: none; border: 1px solid var(--line); background: #F8FAFC; color: var(--text-sub); transition: background-color 150ms ease, border-color 150ms ease, transform 120ms var(--ease-out); }
-    .rp-actions .rp-btn { flex: 1 1 0; }
-    /* 리포트 보기: 어두운 보라 그라데이션 + 빛이 한 번씩 훑고 지나가는 버튼 */
-    .rp-btn.primary { flex: 1 1 100%; position: relative; overflow: hidden; isolation: isolate; justify-content: space-between; gap: 14px; min-height: 64px; padding: 12px 12px 12px 20px; border: 0; border-radius: 16px; color: #fff; text-align: left;
-      background: radial-gradient(120% 140% at 0% 0%, #7C3AED 0%, transparent 55%), radial-gradient(90% 120% at 100% 100%, #2563EB 0%, transparent 60%), #1E1B4B;
-      box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 12px 28px -14px rgba(76,29,149,.75); }
-    .rp-btn.primary::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.22) 48%, transparent 66%); transform: translateX(-100%); animation: rpSheen 5.5s var(--ease-out) 1.2s infinite; }
-    @keyframes rpSheen { 0% { transform: translateX(-100%); } 28%, 100% { transform: translateX(100%); } }
-    .rp-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-    .rp-tx b { font-size: 16px; font-weight: 800; letter-spacing: -0.2px; }
-    .rp-tx small { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rp-go { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); transition: transform 200ms var(--ease-out), background-color 150ms ease; }
-    .rp-go svg { width: 18px; height: 18px; }
+    .rp-actions { flex-wrap: nowrap; }
+    .rp-actions .rp-btn { flex: 1 1 0; white-space: nowrap; }
+    /* 리포트 보기: 보드의 선택된 탭과 같은 연한 파랑 */
+    .rp-btn.primary { flex: 1.4 1 0; background: #EFF6FF; border-color: #BFDBFE; color: #1D4ED8; font-weight: 800; }
+    .rp-btn.primary svg { width: 15px; height: 15px; flex: none; }
     .rp-btn:active { transform: scale(0.97); }
     .rp-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    @media (hover: hover) and (pointer: fine) { .rp-btn:hover { border-color: #A5B4CB; } .rp-btn.primary:hover .rp-go { transform: translate(2px, -2px); background: rgba(255,255,255,.24); } }
+    @media (hover: hover) and (pointer: fine) { .rp-btn:hover { border-color: #A5B4CB; } .rp-btn.primary:hover { background: #DBEAFE; border-color: #93C5FD; } }
     .section-card.rp-mini { padding: 0; }
     .rp-mini-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 22px; color: var(--text-main); text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 18px; transition: background-color 150ms ease, transform 120ms var(--ease-out); }
     .rp-mini-link:active { transform: scale(0.98); }
@@ -226,7 +219,7 @@
     @media (hover: hover) and (pointer: fine) { .rp-mini-link:hover { background: #F5F3FF; } }
     .rp-in { animation: rpIn 320ms var(--ease-out) both; }
     @keyframes rpIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-    @media (prefers-reduced-motion: reduce) { .rp-btn:active { transform: none; } .rp-in { animation: none; } .rp-btn.primary::after { animation: none; display: none; } }
+    @media (prefers-reduced-motion: reduce) { .rp-btn:active { transform: none; } .rp-in { animation: none; } }
 
     /* 회사 리마인더 */
     .wk-wrap { padding: 4px 0 12px; }
@@ -619,12 +612,8 @@
       if (it.line) s.appendChild(el("p", "rp-line", String(it.line).replace(/ 할 일/g, "\u00a0할\u00a0일")));
       var acts = el("div", "rp-actions");
       var a1 = el("a", "rp-btn primary"); a1.href = it.artifact; a1.target = "_blank"; a1.rel = "noopener noreferrer";
-      var tx = el("span", "rp-tx"); tx.appendChild(el("b", null, "리포트 보기"));
-      tx.appendChild(el("small", null, "애니메이션 원본 · " + shortDate(it.range.start) + " – " + shortDate(it.range.end)));
-      a1.appendChild(tx);
-      var go = el("span", "rp-go"); go.setAttribute("aria-hidden", "true");
-      go.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
-      a1.appendChild(go);
+      a1.appendChild(document.createTextNode("리포트 보기"));
+      a1.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>');
       acts.appendChild(a1);
       if (/^https:\/\//.test(it.pdf || "")) { var a2 = el("a", "rp-btn", "PDF 사본"); a2.href = it.pdf; a2.target = "_blank"; a2.rel = "noopener noreferrer"; acts.appendChild(a2); }
       if (archive) acts.appendChild(archiveBtn(archive));
