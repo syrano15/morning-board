@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-24T08:30+09:00",
+ "updatedAt": "2026-11-24T09:00+09:00",
  "items": {
   "weekly": {
    "kind": "weekly",
@@ -9,10 +9,10 @@
     "start": "2026-11-16",
     "end": "2026-11-22"
    },
-   "line": "이번 주는 게임·영상·책 끝낸 기록이 없어요. 집 할 일은 55개 완료로 완료율 96%예요.",
-   "artifact": "https://claude.ai/artifact/TAdpHBQPgE7dGws8JbwHTK",
-   "pdf": "https://drive.google.com/file/d/1JpRMhmW3Ws1W4nBD_xZfgknvnoTDWNGB/view",
-   "publishedAt": "2026-11-24T08:30+09:00"
+   "line": "끝낸 작품은 없지만 GTA6를 5일 붙잡았어요. 집 할 일은 68개를 전부 끝냈어요.",
+   "artifact": "https://claude.ai/artifact/SBZ3YQAnSGa6HYYwhWxEw7",
+   "pdf": "https://drive.google.com/file/d/1Cc_jT0-X2Wr3X2sKv82HFOpxXTZ1xtFp/view",
+   "publishedAt": "2026-11-24T09:00+09:00"
   }
  }
 }
