@@ -669,11 +669,28 @@
       return fetch(SB + path, { headers: { "Authorization": "Bearer " + tk, "Accept": "application/vnd.github.raw+json" }, cache: "no-store" })
         .then(function (r) { return r.ok ? r.json() : null; });
     }
+    /* 카드 대신 한 줄 안내 (토큰 없음·불러오기 실패) */
+    function readingNote(slot, text, btnText, href) {
+      var s = section("📰 오늘의 읽을거리", "", "read");
+      s.classList.add("rp-in");
+      s.appendChild(el("p", "rd-desc", text));
+      if (btnText) {
+        var acts = el("div", "rp-actions");
+        var b = el("a", "rp-btn primary", btnText);
+        b.href = href; b.target = "_blank"; b.rel = "noopener";
+        acts.appendChild(b); s.appendChild(acts);
+      }
+      slot.appendChild(s);
+    }
     function readingCard(slot) {
       var tk = ""; try { tk = localStorage.getItem("scrapbook.token") || ""; } catch (e) {}
-      if (!tk) return;
+      if (!tk) {
+        readingNote(slot, "이 기기는 아직 스크랩북과 연결되지 않았어요. 한 번만 연결하면 여기에 읽을거리가 떠요.", "스크랩북 연결하기", "../scrapbook/");
+        return;
+      }
       Promise.all([sbGet("index.json", tk), sbGet("user.json", tk).catch(function () { return null; })]).then(function (r) {
-        var list = (r[0] && r[0].articles) || [], items = (r[1] && r[1].items) || {};
+        if (!r[0] || !Array.isArray(r[0].articles)) throw new Error("index");
+        var list = r[0].articles, items = (r[1] && r[1].items) || {};
         var cand = list.filter(function (a) { return (items[a.id] || {}).status !== "done"; })
           .sort(function (a, b) { return String(b.addedAt || "").localeCompare(String(a.addedAt || "")); });
         var a = cand[0]; if (!a) return;
@@ -692,7 +709,9 @@
         acts.appendChild(b2);
         s.appendChild(acts);
         slot.appendChild(s);
-      }).catch(function () {});
+      }).catch(function () {
+        readingNote(slot, "읽을거리를 불러오지 못했어요. 인터넷 연결을 확인하거나, 토큰이 만료됐다면 스크랩북에서 다시 연결해 주세요.", "스크랩북 열기", "../scrapbook/");
+      });
     }
 
     /* ---- 어제 영어: 피클이 latest.json의 english에 전날 통화를 넣어 둔다 ----
