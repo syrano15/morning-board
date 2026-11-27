@@ -414,6 +414,21 @@
         '<rect width="800" height="240" filter="url(#grain)"/></svg>';
     }
 
+    /* ---- 추천 외투: 최저 기온 + 아침 바람 기준 (2026-11-27 기준표) ----
+     * 최저 6~12° → 준지 트러커 (11/27: 최저 8° 바람 약함)
+     * 최저 2~5°  → 준지 마원   (조금 더 쌀쌀, 바람 없으면 지낼 만함)
+     * 최저 1° 이하 → 패딩       (수능일 전후 수준)
+     * 바람 4m/s 이상이면 한 단계 따뜻하게 (출근길 바람 값 우선, 없으면 하루 바람) */
+    function outerwear(w, min) {
+      var LV = ["준지 트러커", "준지 마원", "패딩"];
+      var lv = min >= 6 ? 0 : min >= 2 ? 1 : 2;
+      var am = w.commuteAM && typeof w.commuteAM === "object" ? Number(w.commuteAM.wind) : NaN;
+      var wind = !isNaN(am) ? am : Number(w.wind);
+      var windy = !isNaN(wind) && wind >= 4 && lv < 2;
+      if (windy) lv++;
+      return { t: "🧥 추천 외투 · " + LV[lv] + (windy ? " (바람 " + wind + "m/s)" : ""), k: lv === 2 ? "cold" : "cool" };
+    }
+
     /* ---- 날씨 한마디: 더위 많이 탐 + 자전거 퇴근 기준 ---- */
     function weatherTips(w, dayOff) {
       var tips = [];
@@ -421,9 +436,7 @@
       var max = Number(w.max), min = Number(w.min), sky = skyOf(w), rc = Number(w.rainChance) || 0;
       if (!isNaN(max) && max >= 28) tips.push({ t: "🥵 많이 더워요 · 최대한 얇게", k: "hot" });
       else if (!isNaN(max) && max >= 23) tips.push({ t: "😓 더운 편이에요 · 반팔 추천", k: "hot" });
-      else if (!isNaN(min) && min <= -5) tips.push({ t: "🥶 많이 추워요 · 두껍게 입으세요", k: "cold" });
-      else if (!isNaN(min) && min <= 0) tips.push({ t: "🧣 추워요 · 아침 영하권", k: "cold" });
-      else if (!isNaN(min) && min <= 8) tips.push({ t: "🧥 쌀쌀해요 · 겉옷 챙기세요", k: "cool" });
+      else if (!isNaN(min) && min <= 12) { var o = outerwear(w, min); tips.push({ t: o.t, k: o.k }); }
       else if (!isNaN(max)) tips.push({ t: "🙂 선선해요", k: "ok" });
       if (sky === "snow") tips.push({ t: "❄️ 눈 소식 · 미끄럼 주의", k: "wet" });
       else if (sky === "rain") tips.push({ t: "☂️ 우산 챙기세요", k: "wet" });
